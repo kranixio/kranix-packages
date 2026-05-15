@@ -4,15 +4,15 @@ import "time"
 
 // Pod represents a runtime pod/container instance.
 type Pod struct {
-	ID          string            `json:"id"`
-	Name        string            `json:"name"`
-	Namespace   string            `json:"namespace"`
-	WorkloadID  string            `json:"workloadId"`
-	Node        string            `json:"node,omitempty"`
-	Phase       PodPhase          `json:"phase"`
-	IP          string            `json:"ip,omitempty"`
-	CreatedAt   time.Time         `json:"createdAt"`
-	Labels      map[string]string `json:"labels,omitempty"`
+	ID         string            `json:"id"`
+	Name       string            `json:"name"`
+	Namespace  string            `json:"namespace"`
+	WorkloadID string            `json:"workloadId"`
+	Node       string            `json:"node,omitempty"`
+	Phase      PodPhase          `json:"phase"`
+	IP         string            `json:"ip,omitempty"`
+	CreatedAt  time.Time         `json:"createdAt"`
+	Labels     map[string]string `json:"labels,omitempty"`
 }
 
 // PodPhase represents the lifecycle phase of a pod.
@@ -40,9 +40,9 @@ type ContainerSpec struct {
 
 // PodStatus represents the current observed state of a pod.
 type PodStatus struct {
-	Phase      PodPhase          `json:"phase"`
-	Message    string            `json:"message,omitempty"`
-	Conditions []PodCondition    `json:"conditions,omitempty"`
+	Phase      PodPhase       `json:"phase"`
+	Message    string         `json:"message,omitempty"`
+	Conditions []PodCondition `json:"conditions,omitempty"`
 }
 
 // PodCondition describes the state of a pod at a certain point.
@@ -58,10 +58,10 @@ type PodCondition struct {
 type PodConditionType string
 
 const (
-	PodReady            PodConditionType = "Ready"
-	PodInitialized      PodConditionType = "Initialized"
-	PodContainersReady  PodConditionType = "ContainersReady"
-	PodScheduled        PodConditionType = "PodScheduled"
+	PodReady           PodConditionType = "Ready"
+	PodInitialized     PodConditionType = "Initialized"
+	PodContainersReady PodConditionType = "ContainersReady"
+	PodScheduled       PodConditionType = "PodScheduled"
 )
 
 // ConditionStatus defines the status of a condition.
@@ -75,7 +75,8 @@ const (
 
 // LogOptions defines options for streaming pod logs.
 type LogOptions struct {
-	Follow bool  `json:"follow"`
-	Tail   int64 `json:"tail,omitempty"`
-	Since  int64 `json:"since,omitempty"`
+	Follow    bool  `json:"follow"`
+	Tail      int64 `json:"tail,omitempty"`
+	TailLines int   `json:"tailLines,omitempty"`
+	Since     int64 `json:"since,omitempty"`
 }

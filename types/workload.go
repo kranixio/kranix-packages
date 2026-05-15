@@ -4,24 +4,28 @@ import "time"
 
 // Workload represents a managed workload in the Kranix system.
 type Workload struct {
-	ID        string         `json:"id"`
-	Name      string         `json:"name"`
-	Namespace string         `json:"namespace"`
-	Spec      WorkloadSpec   `json:"spec"`
-	Status    WorkloadStatus `json:"status"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
+	ID        string            `json:"id"`
+	Name      string            `json:"name"`
+	Namespace string            `json:"namespace"`
+	Spec      WorkloadSpec      `json:"spec"`
+	Status    WorkloadStatus    `json:"status"`
+	CreatedAt time.Time         `json:"createdAt"`
+	UpdatedAt time.Time         `json:"updatedAt"`
 	Labels    map[string]string `json:"labels,omitempty"`
 }
 
 // WorkloadSpec defines the desired configuration of a workload.
 type WorkloadSpec struct {
-	Image     string            `json:"image"`
-	Replicas  int               `json:"replicas"`
-	Env       map[string]string `json:"env,omitempty"`
-	Resources ResourceSpec      `json:"resources,omitempty"`
-	Ports     []PortSpec        `json:"ports,omitempty"`
-	Backend   string            `json:"backend"` // docker | kubernetes
+	Name        string            `json:"name"`
+	Namespace   string            `json:"namespace,omitempty"`
+	Image       string            `json:"image"`
+	Replicas    int               `json:"replicas"`
+	Env         map[string]string `json:"env,omitempty"`
+	Command     string            `json:"command,omitempty"`
+	Resources   ResourceSpec      `json:"resources,omitempty"`
+	Ports       []PortSpec        `json:"ports,omitempty"`
+	Backend     string            `json:"backend"` // docker | kubernetes
+	ComposeFile string            `json:"composeFile,omitempty"`
 }
 
 // ResourceSpec defines compute resource requirements.
@@ -41,6 +45,15 @@ type PortSpec struct {
 
 // WorkloadStatus represents the current observed state of a workload.
 type WorkloadStatus struct {
+	ID            string        `json:"id"`
+	Name          string        `json:"name"`
+	Namespace     string        `json:"namespace,omitempty"`
+	State         string        `json:"state"`
+	Image         string        `json:"image,omitempty"`
+	Replicas      int           `json:"replicas,omitempty"`
+	Ready         int           `json:"ready,omitempty"`
+	Host          string        `json:"host,omitempty"`
+	Pods          []string      `json:"pods,omitempty"`
 	Phase         WorkloadPhase `json:"phase"`
 	ReadyReplicas int           `json:"readyReplicas"`
 	Message       string        `json:"message,omitempty"`
