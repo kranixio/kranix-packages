@@ -39,15 +39,15 @@ func ValidateAPIKey(apiKey string) error {
 	if apiKey == "" {
 		return fmt.Errorf("api key cannot be empty")
 	}
-	
+
 	if !strings.HasPrefix(apiKey, "krane_") {
 		return fmt.Errorf("api key must start with 'krane_'")
 	}
-	
+
 	if len(apiKey) < 16 {
 		return fmt.Errorf("api key must be at least 16 characters")
 	}
-	
+
 	return nil
 }
 
@@ -59,7 +59,7 @@ func GenerateAPIKey() string {
 	for i := range randomBytes {
 		randomBytes[i] = byte(timestamp % 256)
 	}
-	
+
 	encoded := base64.URLEncoding.EncodeToString(randomBytes)
 	return fmt.Sprintf("krane_%s", encoded)
 }
@@ -76,15 +76,15 @@ func ValidateToken(token *Token) error {
 	if token == nil {
 		return fmt.Errorf("token cannot be nil")
 	}
-	
+
 	if token.Value == "" {
 		return fmt.Errorf("token value cannot be empty")
 	}
-	
+
 	if !token.ExpiresAt.IsZero() && time.Now().After(token.ExpiresAt) {
 		return fmt.Errorf("token has expired")
 	}
-	
+
 	switch token.Type {
 	case TokenTypeAPIKey:
 		return ValidateAPIKey(token.Value)
@@ -114,4 +114,97 @@ func HasAnyRole(claims *Claims, roles ...string) bool {
 		}
 	}
 	return false
+}
+
+// Scope represents an API key scope for fine-grained access control.
+type Scope string
+
+const (
+	ScopeRead  Scope = "read"
+	ScopeWrite Scope = "write"
+	ScopeAdmin Scope = "admin"
+)
+
+// ResourceType represents the type of resource a scope applies to.
+type ResourceType string
+
+const (
+	ResourceWorkload  ResourceType = "workload"
+	ResourceNamespace ResourceType = "namespace"
+	ResourcePod       ResourceType = "pod"
+	ResourceEvent     ResourceType = "event"
+	ResourceWebhook   ResourceType = "webhook"
+	ResourceTenant    ResourceType = "tenant"
+	ResourceQuota     ResourceType = "quota"
+)
+
+// Permission represents a fine-grained permission.
+type Permission struct {
+	ResourceType ResourceType `json:"resourceType"`
+	ResourceID   string       `json:"resourceId,omitempty"` // Empty means all resources of this type
+	Scope        Scope        `json:"scope"`
+}
+
+// APIKey represents an API key with fine-grained scopes.
+type APIKey struct {
+	ID          string       `json:"id"`
+	Name        string       `json:"name"`
+	Key         string       `json:"key"`
+	Permissions []Permission `json:"permissions"`
+	ExpiresAt   time.Time    `json:"expiresAt,omitempty"`
+	CreatedAt   time.Time    `json:"createdAt"`
+	CreatedBy   string       `json:"createdBy,omitempty"`
+	TenantID    string       `json:"tenantId,omitempty"`
+	Revoked     bool         `json:"revoked"`
+}
+
+// HasPermission checks if an API key has a specific permission.
+func HasPermission(apiKey *APIKey, resourceType ResourceType, scope Scope, resourceID string) bool {
+	if apiKey == nil || apiKey.Revoked {
+		return false
+	}
+
+	for _, perm := range apiKey.Permissions {
+		if perm.ResourceType != resourceType {
+			continue
+		}
+
+		// If resourceID is specified, check if it matches or is wildcard
+		if perm.ResourceID != "" && perm.ResourceID != resourceID {
+			continue
+		}
+
+		// Check scope hierarchy: admin > write > read
+		switch perm.Scope {
+		case ScopeAdmin:
+			return true
+		case ScopeWrite:
+			if scope == ScopeWrite || scope == ScopeRead {
+				return true
+			}
+		case ScopeRead:
+			if scope == ScopeRead {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// GenerateScopedAPIKey generates a new API key with specific permissions.
+func GenerateScopedAPIKey(name string, permissions []Permission) *APIKey {
+	return &APIKey{
+		ID:          generateID(),
+		Name:        name,
+		Key:         GenerateAPIKey(),
+		Permissions: permissions,
+		CreatedAt:   time.Now(),
+		Revoked:     false,
+	}
+}
+
+// generateID generates a unique ID.
+func generateID() string {
+	return fmt.Sprintf("key_%d", time.Now().UnixNano())
 }
