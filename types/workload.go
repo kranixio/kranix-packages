@@ -323,3 +323,82 @@ type EdgeNodeStatus struct {
 	RunningWorkloads int32     `json:"runningWorkloads"`
 	Message          string    `json:"message,omitempty"`
 }
+
+// ImageCacheConfig defines image caching configuration.
+type ImageCacheConfig struct {
+	Enabled         bool     `json:"enabled"`
+	CacheSizeGB     int32    `json:"cacheSizeGB"`     // Maximum cache size in GB
+	MaxCachedImages int32    `json:"maxCachedImages"` // Maximum number of images to cache
+	TTL             string   `json:"ttl"`             // Time-to-live for cached images (e.g., "168h")
+	PrepullImages   []string `json:"prepullImages"`   // Images to prepull on node startup
+	RegistryMirrors []string `json:"registryMirrors"` // Registry mirror URLs
+}
+
+// ImageCacheStatus represents the status of image cache.
+type ImageCacheStatus struct {
+	TotalSizeGB   float64   `json:"totalSizeGB"`
+	CachedImages  int32     `json:"cachedImages"`
+	HitRate       float64   `json:"hitRate"` // Cache hit rate percentage
+	LastCleanup   time.Time `json:"lastCleanup"`
+	CacheLocation string    `json:"cacheLocation"`
+}
+
+// ResourceMetrics represents resource usage metrics for a workload.
+type ResourceMetrics struct {
+	WorkloadID     string         `json:"workloadId"`
+	WorkloadName   string         `json:"workloadName"`
+	Namespace      string         `json:"namespace"`
+	Timestamp      time.Time      `json:"timestamp"`
+	CPUUsage       CPUMetrics     `json:"cpuUsage"`
+	MemoryUsage    MemoryMetrics  `json:"memoryUsage"`
+	GPUUsage       []GPUMetrics   `json:"gpuUsage,omitempty"`
+	NetworkMetrics NetworkMetrics `json:"networkMetrics,omitempty"`
+	StorageMetrics StorageMetrics `json:"storageMetrics,omitempty"`
+}
+
+// CPUMetrics represents CPU usage metrics.
+type CPUMetrics struct {
+	UsageCores   float64 `json:"usageCores"`   // Current CPU usage in cores
+	UsagePercent float64 `json:"usagePercent"` // CPU usage as percentage of limit
+	RequestCores string  `json:"requestCores"` // CPU request
+	LimitCores   string  `json:"limitCores"`   // CPU limit
+}
+
+// MemoryMetrics represents memory usage metrics.
+type MemoryMetrics struct {
+	UsageBytes   int64   `json:"usageBytes"`   // Current memory usage in bytes
+	UsagePercent float64 `json:"usagePercent"` // Memory usage as percentage of limit
+	RequestBytes int64   `json:"requestBytes"` // Memory request in bytes
+	LimitBytes   int64   `json:"limitBytes"`   // Memory limit in bytes
+	CacheBytes   int64   `json:"cacheBytes"`   // Memory cache usage
+}
+
+// GPUMetrics represents GPU usage metrics.
+type GPUMetrics struct {
+	DeviceID      int32   `json:"deviceId"`
+	DeviceName    string  `json:"deviceName"`
+	Utilization   float64 `json:"utilization"`   // GPU utilization percentage
+	MemoryUsedMB  int64   `json:"memoryUsedMB"`  // GPU memory used in MB
+	MemoryTotalMB int64   `json:"memoryTotalMB"` // Total GPU memory in MB
+	TemperatureC  float64 `json:"temperatureC"`  // GPU temperature in Celsius
+	PowerUsageW   float64 `json:"powerUsageW"`   // Power usage in watts
+}
+
+// NetworkMetrics represents network metrics.
+type NetworkMetrics struct {
+	ReceiveBytesPerSecond  int64 `json:"receiveBytesPerSecond"`
+	TransmitBytesPerSecond int64 `json:"transmitBytesPerSecond"`
+	ReceivePacketsPerSec   int64 `json:"receivePacketsPerSec"`
+	TransmitPacketsPerSec  int64 `json:"transmitPacketsPerSec"`
+	ErrorsPerSec           int64 `json:"errorsPerSec"`
+}
+
+// StorageMetrics represents storage metrics.
+type StorageMetrics struct {
+	ReadBytesPerSecond  int64 `json:"readBytesPerSecond"`
+	WriteBytesPerSecond int64 `json:"writeBytesPerSecond"`
+	ReadOpsPerSecond    int64 `json:"readOpsPerSecond"`
+	WriteOpsPerSecond   int64 `json:"writeOpsPerSecond"`
+	DiskUsageBytes      int64 `json:"diskUsageBytes"`
+	DiskTotalBytes      int64 `json:"diskTotalBytes"`
+}

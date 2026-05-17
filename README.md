@@ -377,6 +377,25 @@ Provides types for edge node agent configuration:
 - `EdgeNodeStatus` - Edge node status (phase, heartbeat, resource availability, running workloads)
 - Enables lightweight binary connections for remote nodes
 
+### Image Caching (`types/workload.go`)
+
+Provides types for image caching layer:
+
+- `ImageCacheConfig` - Image cache configuration (size, limits, TTL, prepull images, mirrors)
+- `ImageCacheStatus` - Image cache status (total size, cached images, hit rate, cleanup info)
+- Enables faster image pulls by caching across nodes
+
+### Resource Metrics (`types/workload.go`)
+
+Provides types for resource usage metrics:
+
+- `ResourceMetrics` - Comprehensive metrics for workloads (CPU, memory, GPU, network, storage)
+- `CPUMetrics` - CPU usage metrics (cores, percentage, requests, limits)
+- `MemoryMetrics` - Memory usage metrics (bytes, percentage, cache)
+- `GPUMetrics` - GPU metrics (utilization, memory, temperature, power)
+- `NetworkMetrics` - Network metrics (throughput, packets, errors)
+- `StorageMetrics` - Storage metrics (I/O, disk usage)
+
 ---
 
 ## Connectivity
