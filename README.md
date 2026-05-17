@@ -13,10 +13,16 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 | Package | Description |
 |---|---|
 | `types` | Core domain types (Workload, Pod, Namespace, Status, etc.) |
+| `types/ratelimit` | Rate limiting and quota types |
+| `types/sse` | Server-Sent Events streaming types |
+| `types/apiversion` | API versioning and routing types |
+| `types/analytics` | Usage analytics and metrics types |
+| `types/version` | Semantic versioning and changelog types |
+| `types/webhook` | Webhook configuration and event types |
 | `errors` | Typed error codes and wrapping utilities |
 | `logging` | Structured logger (zap-based) with consistent field conventions |
 | `config` | Config schema definitions and loader |
-| `auth` | Token types, validation helpers, RBAC primitives |
+| `auth` | Token types, validation helpers, RBAC primitives, OIDC support |
 | `runtime` | The `RuntimeDriver` interface (implemented by kranix-runtime) |
 | `sdk/go` | Public Go client for the kranix-api |
 | `sdk/typescript` | Public TypeScript/Node.js client for the kranix-api |
@@ -226,7 +232,14 @@ Standard fields used across all repos:
 
 ## Project structure
 
-```
+```├s.go
+│   ├── ratelimit.go         # Rate limiting & quota types
+│   ├── sse.go               # SSE streaming types
+│   ├── apiversion.go        # API versioning types
+│   ├── analytics.go         # Analytics & metrics types
+│   ├── veriono           # Semantic versining types
+│   ├── webhook.go           # Webhook types
+│   └── auth.go              # Authentication types
 kranix-packages/
 ├── types/                  # Core domain types
 │   ├── workload.go
@@ -261,6 +274,69 @@ kranix-packages/
 All other Kranix repos pin to a specific minor version of `kranix-packages`. Breaking changes require a coordinated release across the ecosystem.
 
 The `RuntimeDriver` interface is considered **stable** after v1.0.0 — changes will only happen in major versions with a deprecation period.
+
+---
+
+## New Feature Types
+
+### Rate Limiting & Quotas (`types/ratelimit.go`)
+
+Provides types for rate limiting and namespace quota management:
+
+- `RateLimitConfig` - Configuration for rate limiting (requests per second, burst size)
+- `NamespaceQuota` - Resource quotas per namespace (workloads, CPU, memory, storage)
+- `NamespaceQuotaUsage` - Current quota usage with percentages
+- `RateLimitInfo` - Rate limit information for clients
+- `QuotaRequest` / `QuotaResponse` - Quota management types
+
+### SSE Streaming (`types/sse.go`)
+
+Provides types for Server-Sent Events:
+
+- `SSEEvent` - Server-Sent Event structure with ID, event type, data, timestamp
+- `WorkloadStateChange` - Workload state change event with old/new state
+- `SSESubscription` - Client subscription with namespace and event filters
+- `SSEClient` - SSE client connection information
+- `BroadcastMessage` - Message to broadcast to connected clients
+
+### API Versioning (`types/apiversion.go`)
+
+Provides types for API versioning:
+
+- `APIRouteVersion` - API version information (v1, v2) with status and deprecation
+- `APIEndpoint` - API endpoint with version mappings
+- `APIVersionConfig` - API versioning configuration
+- `CompatibilityRule` - Compatibility rules between versions
+- `VersionMigration` - Migration guidance between versions
+
+### Analytics (`types/analytics.go`)
+
+Provides types for usage analytics:
+
+- `AnalyticsMetrics` - Time-series metrics for workloads
+- `DeployMetrics` - Deployment success/failure metrics
+- `ErrorMetrics` - Error rates and types
+- `LatencyMetrics` - Performance metrics with percentiles
+- `UsageSummary` - Aggregated usage across namespaces/tenants
+- `NamespaceUsage` / `TenantUsage` - Usage by namespace or tenant
+
+### Version Management (`types/version.go`)
+
+Provides types for semantic versioning:
+
+- `SemanticVersion` - Semantic version with major, minor, patch
+- `DeprecationInfo` - Deprecation details with sunset dates
+- `ChangelogEntry` - Changelog entries with change types
+- `MigrationInfo` - Migration guidance for breaking changes
+- `ChangeType` - Enum of change types (added, changed, deprecated, etc.)
+
+### Webhooks (`types/webhook.go`)
+
+Provides types for webhook configuration:
+
+- `Webhook` - Webhook configuration with provider-specific settings
+- `WebhookEvent` - Webhook event types and payloads
+- `WebhookDelivery` - Webhook delivery status and retries
 
 ---
 
