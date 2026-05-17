@@ -67,7 +67,8 @@ type WorkloadSpec struct {
     Env       map[string]string `json:"env,omitempty"`
     Resources ResourceSpec      `json:"resources,omitempty"`
     Ports     []PortSpec        `json:"ports,omitempty"`
-    Backend   string            `json:"backend"`    // docker | kubernetes
+    Backend   string            `json:"backend"`    // docker | kubernetes | podman | compose | remote
+    RemoteHost string           `json:"remoteHost,omitempty"` // For remote SSH backend
 }
 
 type ResourceSpec struct {
@@ -395,6 +396,14 @@ Provides types for resource usage metrics:
 - `GPUMetrics` - GPU metrics (utilization, memory, temperature, power)
 - `NetworkMetrics` - Network metrics (throughput, packets, errors)
 - `StorageMetrics` - Storage metrics (I/O, disk usage)
+
+### Remote SSH Backend (`types/workload.go`)
+
+Provides support for remote SSH backend:
+
+- `RemoteHost` field in `WorkloadSpec` - Specifies remote host for SSH-based deployment
+- Enables agentless connections to bare metal servers
+- Supports both Docker and Podman runtimes on remote hosts
 
 ---
 

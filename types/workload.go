@@ -25,8 +25,9 @@ type WorkloadSpec struct {
 	Command           string             `json:"command,omitempty"`
 	Resources         ResourceSpec       `json:"resources,omitempty"`
 	Ports             []PortSpec         `json:"ports,omitempty"`
-	Backend           string             `json:"backend"` // docker | kubernetes
+	Backend           string             `json:"backend"` // docker | kubernetes | podman | compose | remote
 	ComposeFile       string             `json:"composeFile,omitempty"`
+	RemoteHost        string             `json:"remoteHost,omitempty"` // For remote SSH backend
 	RolloutStrategy   RolloutStrategy    `json:"rolloutStrategy,omitempty"`
 	AutoScaling       *AutoScalingConfig `json:"autoScaling,omitempty"`
 	Scheduling        *SchedulingConfig  `json:"scheduling,omitempty"`
