@@ -36,10 +36,20 @@ type WorkloadSpec struct {
 
 // ResourceSpec defines compute resource requirements.
 type ResourceSpec struct {
-	CPURequest    string `json:"cpuRequest,omitempty"`
-	CPULimit      string `json:"cpuLimit,omitempty"`
-	MemoryRequest string `json:"memoryRequest,omitempty"`
-	MemoryLimit   string `json:"memoryLimit,omitempty"`
+	CPURequest    string   `json:"cpuRequest,omitempty"`
+	CPULimit      string   `json:"cpuLimit,omitempty"`
+	MemoryRequest string   `json:"memoryRequest,omitempty"`
+	MemoryLimit   string   `json:"memoryLimit,omitempty"`
+	GPU           *GPUSpec `json:"gpu,omitempty"`
+}
+
+// GPUSpec defines GPU resource requirements.
+type GPUSpec struct {
+	Vendor string `json:"vendor"`           // nvidia | amd
+	Count  int32  `json:"count"`            // Number of GPUs
+	Type   string `json:"type,omitempty"`   // GPU type (e.g., "A100", "V100", "MI250")
+	SKU    string `json:"sku,omitempty"`    // GPU SKU for specific models
+	Memory string `json:"memory,omitempty"` // GPU memory requirement (e.g., "16Gi")
 }
 
 // PortSpec defines a port configuration.
@@ -249,4 +259,67 @@ type TenantIsolation struct {
 	LimitRange        bool   `json:"limitRange"`
 	PodSecurityPolicy bool   `json:"podSecurityPolicy"`
 	StorageClass      string `json:"storageClass,omitempty"`
+}
+
+// EphemeralEnvironmentSpec defines ephemeral environment lifecycle configuration.
+type EphemeralEnvironmentSpec struct {
+	Enabled         bool   `json:"enabled"`
+	TriggerType     string `json:"triggerType"`   // pull_request | branch_push | manual
+	TriggerSource   string `json:"triggerSource"` // github | gitlab | bitbucket
+	PRNumber        int32  `json:"prNumber,omitempty"`
+	BranchName      string `json:"branchName,omitempty"`
+	CommitSHA       string `json:"commitSHA,omitempty"`
+	TTL             string `json:"ttl"` // Time to live (e.g., "2h", "24h")
+	AutoTeardown    bool   `json:"autoTeardown"`
+	TeardownOnMerge bool   `json:"teardownOnMerge"`
+	TeardownOnClose bool   `json:"teardownOnClose"`
+	MaxEnvironments int32  `json:"maxEnvironments"` // Max concurrent ephemeral envs
+	NamespacePrefix string `json:"namespacePrefix"` // e.g., "pr-" or "ephem-"
+}
+
+// EphemeralEnvironmentStatus represents the status of an ephemeral environment.
+type EphemeralEnvironmentStatus struct {
+	ID                string     `json:"id"`
+	Name              string     `json:"name"`
+	Namespace         string     `json:"namespace"`
+	Phase             string     `json:"phase"` // Creating | Ready | Terminating | Terminated
+	TriggerType       string     `json:"triggerType"`
+	PRNumber          int32      `json:"prNumber,omitempty"`
+	BranchName        string     `json:"branchName,omitempty"`
+	CommitSHA         string     `json:"commitSHA,omitempty"`
+	CreatedAt         time.Time  `json:"createdAt"`
+	ExpiresAt         time.Time  `json:"expiresAt"`
+	TerminatedAt      *time.Time `json:"terminatedAt,omitempty"`
+	TerminationReason string     `json:"terminationReason,omitempty"`
+}
+
+// EdgeNodeSpec defines edge node agent configuration.
+type EdgeNodeSpec struct {
+	NodeID            string            `json:"nodeID"`
+	NodeName          string            `json:"nodeName"`
+	IPAddress         string            `json:"ipAddress"`
+	Port              int32             `json:"port"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Capabilities      []string          `json:"capabilities,omitempty"` // gpu | storage | compute
+	Architecture      string            `json:"architecture"`           // amd64 | arm64
+	OS                string            `json:"os"`                     // linux | windows
+	Resources         *ResourceSpec     `json:"resources,omitempty"`
+	HeartbeatInterval string            `json:"heartbeatInterval"` // e.g., "30s"
+	AuthToken         string            `json:"authToken,omitempty"`
+}
+
+// EdgeNodeStatus represents the status of an edge node.
+type EdgeNodeStatus struct {
+	NodeID           string    `json:"nodeID"`
+	Phase            string    `json:"phase"` // Connecting | Connected | Disconnected | Error
+	LastHeartbeat    time.Time `json:"lastHeartbeat"`
+	Version          string    `json:"version,omitempty"`
+	AvailableGPU     int32     `json:"availableGPU,omitempty"`
+	TotalGPU         int32     `json:"totalGPU,omitempty"`
+	AvailableMemory  string    `json:"availableMemory,omitempty"`
+	TotalMemory      string    `json:"totalMemory,omitempty"`
+	AvailableCPU     string    `json:"availableCPU,omitempty"`
+	TotalCPU         string    `json:"totalCPU,omitempty"`
+	RunningWorkloads int32     `json:"runningWorkloads"`
+	Message          string    `json:"message,omitempty"`
 }

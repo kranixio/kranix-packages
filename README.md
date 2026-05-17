@@ -70,6 +70,22 @@ type WorkloadSpec struct {
     Backend   string            `json:"backend"`    // docker | kubernetes
 }
 
+type ResourceSpec struct {
+    CPURequest    string `json:"cpuRequest,omitempty"`
+    CPULimit      string `json:"cpuLimit,omitempty"`
+    MemoryRequest string `json:"memoryRequest,omitempty"`
+    MemoryLimit   string `json:"memoryLimit,omitempty"`
+    GPU           *GPUSpec `json:"gpu,omitempty"`
+}
+
+type GPUSpec struct {
+    Vendor   string `json:"vendor"`   // nvidia | amd
+    Count    int32  `json:"count"`    // Number of GPUs
+    Type     string `json:"type,omitempty"`     // GPU type (e.g., "A100", "V100", "MI250")
+    SKU      string `json:"sku,omitempty"`      // GPU SKU for specific models
+    Memory   string `json:"memory,omitempty"`   // GPU memory requirement (e.g., "16Gi")
+}
+
 type WorkloadStatus struct {
     Phase         WorkloadPhase `json:"phase"`
     ReadyReplicas int           `json:"readyReplicas"`
@@ -337,6 +353,29 @@ Provides types for webhook configuration:
 - `Webhook` - Webhook configuration with provider-specific settings
 - `WebhookEvent` - Webhook event types and payloads
 - `WebhookDelivery` - Webhook delivery status and retries
+
+### GPU Resources (`types/workload.go`)
+
+Provides types for GPU workload scheduling:
+
+- `GPUSpec` - GPU resource requirements with vendor (nvidia/amd), count, type, SKU, and memory
+- Integrated into `ResourceSpec` for workload specifications
+
+### Ephemeral Environments (`types/workload.go`)
+
+Provides types for ephemeral environment lifecycle management:
+
+- `EphemeralEnvironmentSpec` - Configuration for ephemeral environments (trigger type, TTL, auto-teardown)
+- `EphemeralEnvironmentStatus` - Status of ephemeral environments (phase, expiration, termination)
+- Supports PR/branch triggers with automatic cleanup
+
+### Edge Node Agent (`types/workload.go`)
+
+Provides types for edge node agent configuration:
+
+- `EdgeNodeSpec` - Edge node specification (node ID, IP, capabilities, resources, auth)
+- `EdgeNodeStatus` - Edge node status (phase, heartbeat, resource availability, running workloads)
+- Enables lightweight binary connections for remote nodes
 
 ---
 
