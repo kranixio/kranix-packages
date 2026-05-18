@@ -38,6 +38,30 @@ message WorkloadSpec {
   repeated Dependency dependencies = 15;
   FailurePrediction failure_prediction = 16;
   CrossNamespaceTrafficPolicy cross_namespace_traffic = 17;
+  CronScheduleSpec cron_schedule = 18;
+}
+
+// CronScheduleSpec defines optional periodic reconcile/deploy triggers (standard 5-field cron).
+message CronScheduleSpec {
+  string schedule = 1;
+  bool suspended = 2;
+  string time_zone = 3;
+  string concurrency_policy = 4;
+}
+
+// CronScheduleStatus exposes last cron trigger time from the control plane.
+message CronScheduleStatus {
+  int64 last_schedule_time = 1; // Unix timestamp in seconds; 0 if unset
+}
+
+// HardResourceQuota defines aggregate limits per namespace or team label, aligned with kranix-core.
+message HardResourceQuota {
+  string namespace = 1;
+  string team_id = 2;
+  string max_cpu_requests = 3;
+  string max_memory_requests = 4;
+  int32 max_workloads = 5;
+  int32 max_replicas_total = 6;
 }
 
 // CrossNamespaceTrafficPolicy controls ingress/egress namespace peers for workloads.
@@ -90,6 +114,7 @@ message WorkloadStatus {
   int32 ready_replicas = 11;
   string message = 12;
   int64 last_updated = 13;  // Unix timestamp in seconds
+  CronScheduleStatus cron = 14;
 }
 
 // WorkloadPhase represents the lifecycle phase of a workload.

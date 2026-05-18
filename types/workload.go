@@ -35,6 +35,8 @@ type WorkloadSpec struct {
 	FailurePrediction *FailurePrediction `json:"failurePrediction,omitempty"`
 	// CrossNamespaceTraffic restricts namespace-to-namespace traffic when enforced by Kubernetes NetworkPolicy drivers.
 	CrossNamespaceTraffic *CrossNamespaceTrafficPolicy `json:"crossNamespaceTraffic,omitempty"`
+	// CronSchedule enables cron-style scheduling in core; Kubernetes runtime maps this to a CronJob when set.
+	CronSchedule *CronScheduleSpec `json:"cronSchedule,omitempty"`
 }
 
 // ResourceSpec defines compute resource requirements.
@@ -77,6 +79,20 @@ type WorkloadStatus struct {
 	ReadyReplicas int           `json:"readyReplicas"`
 	Message       string        `json:"message,omitempty"`
 	LastUpdated   time.Time     `json:"lastUpdated"`
+	Cron          *CronScheduleStatus `json:"cron,omitempty"`
+}
+
+// CronScheduleSpec defines optional periodic execution (standard 5-field cron, e.g. "0 * * * *").
+type CronScheduleSpec struct {
+	Schedule          string `json:"schedule"`
+	Suspended         bool   `json:"suspended,omitempty"`
+	TimeZone          string `json:"timeZone,omitempty"`
+	ConcurrencyPolicy string `json:"concurrencyPolicy,omitempty"` // Allow | Forbid | Replace
+}
+
+// CronScheduleStatus records observed cron trigger metadata (e.g. from core).
+type CronScheduleStatus struct {
+	LastScheduleTime *time.Time `json:"lastScheduleTime,omitempty"`
 }
 
 // WorkloadPhase represents the lifecycle phase of a workload.

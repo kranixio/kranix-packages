@@ -12,7 +12,7 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 
 | Package | Description |
 |---|---|
-| `types` | Core domain types (Workload, Pod, Namespace, Status, etc.) |
+| `types` | Core domain types (Workload, Pod, Namespace, Status, quotas, cron fields, …) |
 | `types/ratelimit` | Rate limiting and quota types |
 | `types/sse` | Server-Sent Events streaming types |
 | `types/apiversion` | API versioning and routing types |
@@ -476,6 +476,27 @@ Provides types for GPU workload scheduling:
 
 - `GPUSpec` - GPU resource requirements with vendor (nvidia/amd), count, type, SKU, and memory
 - Integrated into `ResourceSpec` for workload specifications
+
+### Cron schedules (`types/workload.go`)
+
+- **`CronSchedule`** on **`WorkloadSpec`** (`cronSchedule` in JSON): `schedule` (standard 5-field cron), `suspended`, `timeZone`, `concurrencyPolicy` (`allow` | `forbid` | `replace`)
+- **`Cron`** on **`WorkloadStatus`**: optional `lastScheduleTime` — aligned with **`kranix-core`** reconcile triggers and **`kranix-runtime`** Kubernetes **CronJob** mapping
+
+### Hard aggregate quotas (`types/quota.go`)
+
+- **`HardResourceQuota`** — optional caps on total CPU/memory *requests*, workload count, and replica count keyed by **`namespace`** or **`teamId`** (matches team label `kranix.io/team` semantics in core). JSON field names are camelCase (`maxCpuRequests`, `maxReplicasTotal`). Use this type in API payloads and SDKs; **protobuf** equivalents live under `proto/v1/workload.proto` (`HardResourceQuota`).
+
+### Scheduling — priority & preemption (`types/workload.go`)
+
+- **`SchedulingConfig`** (`scheduling` on **`WorkloadSpec`**, camelCase JSON): **`workloadPriority`** — `critical` | `high` | `normal` | `low`; **`preemptionEnabled`** requests PriorityClasses that can preempt lower-priority pods (**runtime** selects `kranix-*` vs `kranix-*-np` name suffix); **`priorityClassName`** overrides automatic mapping.
+
+### Spot / preemptible workloads (`types/workload.go`)
+
+- **`SchedulingConfig.spot`**: **`enabled`**, **`rescheduleOnNodeTermination`** — surfaced to **`kranix-runtime`** Kubernetes driver for tolerations and faster reschedule after node interruptions.
+
+### Cross-namespace traffic (`types/workload.go`)
+
+- **`CrossNamespaceTrafficPolicy`** on **`WorkloadSpec`** (`crossNamespaceTraffic`): **`enabled`**, **`allowedIngressNamespaces`**, **`allowedEgressNamespaces`**, **`allowSameNamespace`**, **`blockClusterDNS`**, **`allowEgressInternet`** — consumed when creating **NetworkPolicies** on the Kubernetes backend.
 
 ### Ephemeral Environments (`types/workload.go`)
 
