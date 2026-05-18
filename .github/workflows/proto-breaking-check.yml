@@ -1,0 +1,37 @@
+name: Proto Breaking Change Detection
+
+on:
+  pull_request:
+    paths:
+      - 'proto/**/*.proto'
+      - 'proto/VERSION'
+  push:
+    branches:
+      - main
+    paths:
+      - 'proto/**/*.proto'
+      - 'proto/VERSION'
+
+jobs:
+  check-breaking:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: '1.28.1'
+
+      - name: Check for breaking changes
+        run: |
+          cd proto
+          buf breaking --against '.git#branch=main'
+
+      - name: Lint proto files
+        run: |
+          cd proto
+          buf lint

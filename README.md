@@ -27,8 +27,10 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 | `sdk/go` | Public Go client for the kranix-api (REST + SSE event subscription) |
 | `sdk/typescript` | Public TypeScript/Node.js client for the kranix-api (REST + SSE) |
 | `sdk/python` | Public Python client (`kranix-io-sdk` on PyPI layout) for ML / data workflows |
+| `sdk/rust` | Public Rust client for high-performance tooling on top of Kranix |
 | `cmd/kranix-mock-api` | Local mock HTTP server mirroring core REST + `/api/sse` for tests |
-| `proto` | Shared protobuf definitions and generated Go/TS stubs |
+| `cmd/cli-lib` | Shared CLI helper library for flag parsing and output formatting |
+| `proto` | Versioned protobuf definitions with breaking change detection in CI |
 
 ---
 
@@ -238,6 +240,22 @@ for await (const frame of client.subscribeWorkloadEvents({
 
 ```bash
 cd sdk/python && pip install .
+### Rust SDK
+
+```bash
+cd sdk/rust
+cargo build
+cargo test
+```
+
+Add to your `Cargo.toml`:
+
+```toml
+[dependencies]
+kranix-sdk = { version = "0.1", git = "https://github.com/kranix-io/kranix-packages" }
+tokio = { version = "1", features = ["full"] }
+```
+
 ```
 
 ```python
@@ -340,7 +358,8 @@ Standard fields used across all repos:
 ```
 kranix-packages/
 ├── cmd/
-│   └── kranix-mock-api/   # Mock HTTP API for local / CI tests
+│   ├── kranix-mock-api/   # Mock HTTP API for local / CI tests
+│   └── cli-lib/           # Shared CLI helper library
 ├── types/                  # Core domain types
 │   ├── workload.go
 │   ├── pod.go
@@ -350,11 +369,15 @@ kranix-packages/
 ├── config/
 ├── auth/
 ├── runtime/
-├── proto/
+├── proto/                  # Versioned protobuf definitions
+│   ├── v1/                # Proto version 1
+│   ├── buf.yaml           # Buf configuration
+│   └── Makefile           # Proto generation
 └── sdk/
     ├── go/
     ├── typescript/
-    └── python/
+    ├── python/
+    └── rust/              # Rust SDK for high-performance tooling
 ```
 
 ### Older reference (domain type files)
@@ -473,6 +496,51 @@ Provides types for edge node agent configuration:
 ### Image Caching (`types/workload.go`)
 
 Provides types for image caching layer:
+
+### Versioned Proto Contracts (`proto/`)
+
+Provides versioned protobuf definitions with automated breaking change detection:
+
+- **v1/** - Proto version 1 definitions for workloads, namespaces, and API services
+- **buf.yaml** - Configuration for buf (protobuf linter and breaking change detector)
+- **buf.gen.yaml** - Configuration for generating Go and TypeScript stubs
+- **Makefile** - Commands for generating, formatting, and linting proto files
+- **CI Integration** - Automated breaking change detection on pull requests
+, CLI helper library
+Usage:
+
+```bash, or Rust
+cd proto
+make generate    # Generate Go and TypeScript stubs
+make format      # Format proto files
+make lint        # Lint proto files
+make check-breaking  # Check for breaking changes against main branch
+```
+
+### Rust SDK (`sdk/rust/`)
+
+High-performance Rust SDK for teams building tooling on top of Kranix:
+
+- **Async client** built on Tokio for high-performance operations
+- **Type-safe** full type definitions for all Kranix API objects
+- **Event streaming** support for SSE-based workload events
+- **Comprehensive error handling** with retry support
+- **Configurable** options for timeouts, retries, and authentication
+
+See `sdk/rust/README.md` for detailed usage examples.
+
+### CLI Helper Library (`cmd/cli-lib/`)
+
+Shared CLI utilities for any Kranix CLI tool:
+
+- **Common flag parsing** for server URL, API key, namespace, output format, etc.
+- **Output formatting** support for table, JSON, and YAML
+- **Configuration management** with context-based configuration
+- **Interactive prompts** for confirmation dialogs
+- **Progress tracking** for long-running operations
+- **Table building** utilities for formatted output
+
+See `cmd/cli-lib/README.md` for detailed usage examples.
 
 - `ImageCacheConfig` - Image cache configuration (size, limits, TTL, prepull images, mirrors)
 - `ImageCacheStatus` - Image cache status (total size, cached images, hit rate, cleanup info)

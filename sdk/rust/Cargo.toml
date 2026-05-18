@@ -1,0 +1,49 @@
+[package]
+name = "kranix-sdk"
+version = "0.1.0"
+edition = "2021"
+authors = ["Kranix Team"]
+description = "High-performance Rust SDK for Kranix"
+license = "Apache-2.0"
+repository = "https://github.com/kranix-io/kranix-packages"
+keywords = ["kranix", "sdk", "cloud", "infrastructure"]
+categories = ["api-bindings", "web-programming"]
+
+[dependencies]
+# HTTP client
+reqwest = { version = "0.11", features = ["json", "stream"] }
+tokio = { version = "1.35", features = ["full"] }
+tokio-stream = "0.1"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Async streaming
+eventsource-client = "0.11"
+futures = "0.3"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# URL parsing
+url = "2.5"
+
+# Optional: prost for protobuf support (if needed in future)
+prost = { version = "0.12", optional = true }
+
+[dev-dependencies]
+mockito = "1.2"
+tokio-test = "0.4"
+
+[features]
+default = []
+protobuf = ["prost"]

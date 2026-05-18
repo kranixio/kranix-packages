@@ -1,0 +1,221 @@
+syntax = "proto3";
+
+package kranix.v1;
+
+option go_package = "github.com/kranix-io/kranix-packages/proto/gen/go;kranixv1";
+option java_package = "io.kranix.v1";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// API service for workload management.
+service WorkloadService {
+  // Deploy a new workload
+  rpc DeployWorkload(DeployWorkloadRequest) returns (DeployWorkloadResponse);
+  
+  // Get workload status
+  rpc GetWorkload(GetWorkloadRequest) returns (GetWorkloadResponse);
+  
+  // List workloads in a namespace
+  rpc ListWorkloads(ListWorkloadsRequest) returns (ListWorkloadsResponse);
+  
+  // Delete a workload
+  rpc DeleteWorkload(DeleteWorkloadRequest) returns (google.protobuf.Empty);
+  
+  // Restart a workload
+  rpc RestartWorkload(RestartWorkloadRequest) returns (google.protobuf.Empty);
+  
+  // Stream workload events
+  rpc StreamWorkloadEvents(StreamWorkloadEventsRequest) returns (stream WorkloadEvent);
+}
+
+// DeployWorkloadRequest contains the workload specification to deploy.
+message DeployWorkloadRequest {
+  WorkloadSpec spec = 1;
+  string namespace = 2;
+}
+
+// DeployWorkloadResponse contains the deployed workload information.
+message DeployWorkloadResponse {
+  Workload workload = 1;
+}
+
+// GetWorkloadRequest contains the workload identifier.
+message GetWorkloadRequest {
+  string id = 1;
+  string namespace = 2;
+}
+
+// GetWorkloadResponse contains the workload information.
+message GetWorkloadResponse {
+  Workload workload = 1;
+}
+
+// ListWorkloadsRequest contains filtering options.
+message ListWorkloadsRequest {
+  string namespace = 1;
+  string label_selector = 2;
+  int32 limit = 3;
+  string continuation_token = 4;
+}
+
+// ListWorkloadsResponse contains the list of workloads.
+message ListWorkloadsResponse {
+  repeated Workload workloads = 1;
+  string continuation_token = 2;
+}
+
+// DeleteWorkloadRequest contains the workload identifier to delete.
+message DeleteWorkloadRequest {
+  string id = 1;
+  string namespace = 2;
+}
+
+// RestartWorkloadRequest contains the workload identifier to restart.
+message RestartWorkloadRequest {
+  string id = 1;
+  string namespace = 2;
+}
+
+// StreamWorkloadsEventsRequest contains subscription options.
+message StreamWorkloadEventsRequest {
+  repeated string namespaces = 1;
+  repeated string workload_ids = 2;
+}
+
+// WorkloadEvent represents a workload state change event.
+message WorkloadEvent {
+  string event_type = 1;  // workload.created, workload.updated, workload.deleted
+  Workload workload = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+// Namespace service for namespace management.
+service NamespaceService {
+  // Create a namespace
+  rpc CreateNamespace(CreateNamespaceRequest) returns (CreateNamespaceResponse);
+  
+  // Get namespace information
+  rpc GetNamespace(GetNamespaceRequest) returns (GetNamespaceResponse);
+  
+  // List namespaces
+  rpc ListNamespaces(ListNamespacesRequest) returns (ListNamespacesResponse);
+  
+  // Delete a namespace
+  rpc DeleteNamespace(DeleteNamespaceRequest) returns (google.protobuf.Empty);
+}
+
+// CreateNamespaceRequest contains the namespace specification.
+message CreateNamespaceRequest {
+  string name = 1;
+  map<string, string> labels = 2;
+  NamespaceQuota quota = 3;
+}
+
+// CreateNamespaceResponse contains the created namespace information.
+message CreateNamespaceResponse {
+  Namespace namespace = 1;
+}
+
+// GetNamespaceRequest contains the namespace identifier.
+message GetNamespaceRequest {
+  string name = 1;
+}
+
+// GetNamespaceResponse contains the namespace information.
+message GetNamespaceResponse {
+  Namespace namespace = 1;
+}
+
+// ListNamespacesRequest contains filtering options.
+message ListNamespacesRequest {
+  string label_selector = 1;
+  int32 limit = 2;
+  string continuation_token = 3;
+}
+
+// ListNamespacesResponse contains the list of namespaces.
+message ListNamespacesResponse {
+  repeated Namespace namespaces = 1;
+  string continuation_token = 2;
+}
+
+// DeleteNamespaceRequest contains the namespace identifier to delete.
+message DeleteNamespaceRequest {
+  string name = 1;
+}
+
+// Namespace represents a Kranix namespace.
+message Namespace {
+  string name = 1;
+  map<string, string> labels = 2;
+  NamespaceQuota quota = 3;
+  int64 created_at = 4;  // Unix timestamp in seconds
+  int64 updated_at = 5;  // Unix timestamp in seconds
+}
+
+// NamespaceQuota defines resource quotas for a namespace.
+message NamespaceQuota {
+  int32 max_workloads = 1;
+  string max_cpu = 2;
+  string max_memory = 3;
+  string max_storage = 4;
+}
+
+// Pod service for pod management.
+service PodService {
+  // Get pod logs
+  rpc GetPodLogs(GetPodLogsRequest) returns (stream LogLine);
+  
+  // List pods in a namespace
+  rpc ListPods(ListPodsRequest) returns (ListPodsResponse);
+}
+
+// GetPodLogsRequest contains the pod identifier and log options.
+message GetPodLogsRequest {
+  string pod_id = 1;
+  string namespace = 2;
+  bool follow = 3;
+  int32 tail_lines = 4;
+  int64 since_seconds = 5;
+}
+
+// LogLine represents a single log line.
+message LogLine {
+  string line = 1;
+  google.protobuf.Timestamp timestamp = 2;
+}
+
+// ListPodsRequest contains filtering options.
+message ListPodsRequest {
+  string namespace = 1;
+  string workload_id = 2;
+}
+
+// ListPodsResponse contains the list of pods.
+message ListPodsResponse {
+  repeated Pod pods = 1;
+}
+
+// Pod represents a pod in the system.
+message Pod {
+  string id = 1;
+  string name = 2;
+  string namespace = 3;
+  string workload_id = 4;
+  string phase = 5;  // Pending, Running, Succeeded, Failed, Unknown
+  string node = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp started_at = 8;
+  repeated ContainerStatus container_statuses = 9;
+}
+
+// ContainerStatus represents the status of a container.
+message ContainerStatus {
+  string name = 1;
+  string image = 2;
+  bool ready = 3;
+  int32 restart_count = 4;
+  string state = 5;  // running, waiting, terminated
+}

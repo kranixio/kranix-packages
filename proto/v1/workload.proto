@@ -1,0 +1,265 @@
+syntax = "proto3";
+
+package kranix.v1;
+
+option go_package = "github.com/kranix-io/kranix-packages/proto/gen/go;kranixv1";
+option java_package = "io.kranix.v1";
+option java_multiple_files = true;
+
+// Workload represents a managed workload in the Kranix system.
+message Workload {
+  string id = 1;
+  string name = 2;
+  string namespace = 3;
+  WorkloadSpec spec = 4;
+  WorkloadStatus status = 5;
+  int64 created_at = 6;  // Unix timestamp in seconds
+  int64 updated_at = 7;  // Unix timestamp in seconds
+  map<string, string> labels = 8;
+  TenantInfo tenant = 9;
+}
+
+// WorkloadSpec defines the desired configuration of a workload.
+message WorkloadSpec {
+  string name = 1;
+  string namespace = 2;
+  string image = 3;
+  int32 replicas = 4;
+  map<string, string> env = 5;
+  string command = 6;
+  ResourceSpec resources = 7;
+  repeated PortSpec ports = 8;
+  string backend = 9;  // docker | kubernetes | podman | compose | remote
+  string compose_file = 10;
+  string remote_host = 11;  // For remote SSH backend
+  RolloutStrategy rollout_strategy = 12;
+  AutoScalingConfig auto_scaling = 13;
+  SchedulingConfig scheduling = 14;
+  repeated Dependency dependencies = 15;
+  FailurePrediction failure_prediction = 16;
+}
+
+// ResourceSpec defines compute resource requirements.
+message ResourceSpec {
+  string cpu_request = 1;
+  string cpu_limit = 2;
+  string memory_request = 3;
+  string memory_limit = 4;
+  GPUSpec gpu = 5;
+}
+
+// GPUSpec defines GPU resource requirements.
+message GPUSpec {
+  string vendor = 1;  // nvidia | amd
+  int32 count = 2;
+  string type = 3;    // GPU type (e.g., "A100", "V100", "MI250")
+  string sku = 4;     // GPU SKU for specific models
+  string memory = 5;  // GPU memory requirement (e.g., "16Gi")
+}
+
+// PortSpec defines a port configuration.
+message PortSpec {
+  string name = 1;
+  int32 container_port = 2;
+  string protocol = 3;  // tcp | udp
+}
+
+// WorkloadStatus represents the current observed state of a workload.
+message WorkloadStatus {
+  string id = 1;
+  string name = 2;
+  string namespace = 3;
+  string state = 4;
+  string image = 5;
+  int32 replicas = 6;
+  int32 ready = 7;
+  string host = 8;
+  repeated string pods = 9;
+  WorkloadPhase phase = 10;
+  int32 ready_replicas = 11;
+  string message = 12;
+  int64 last_updated = 13;  // Unix timestamp in seconds
+}
+
+// WorkloadPhase represents the lifecycle phase of a workload.
+enum WorkloadPhase {
+  WORKLOAD_PHASE_PENDING = 0;
+  WORKLOAD_PHASE_DEPLOYING = 1;
+  WORKLOAD_PHASE_RUNNING = 2;
+  WORKLOAD_PHASE_DEGRADED = 3;
+  WORKLOAD_PHASE_FAILED = 4;
+}
+
+// RolloutStrategy defines how the workload should be deployed.
+message RolloutStrategy {
+  string type = 1;  // rolling, recreate, bluegreen, canary, abtest
+  int32 max_unavailable = 2;
+  int32 max_surge = 3;
+  CanaryConfig canary_config = 4;
+  ABTestConfig ab_test_config = 5;
+}
+
+// AutoScalingConfig defines auto-scaling behavior.
+message AutoScalingConfig {
+  bool enabled = 1;
+  int32 min_replicas = 2;
+  int32 max_replicas = 3;
+  int32 target_cpu_utilization = 4;
+  int32 target_memory_utilization = 5;
+  repeated CustomMetric custom_metrics = 6;
+  int32 scale_down_cooldown_seconds = 7;
+  int32 scale_up_cooldown_seconds = 8;
+}
+
+// CustomMetric defines a custom metric for auto-scaling.
+message CustomMetric {
+  string name = 1;
+  string type = 2;  // pods, object
+  string metric_name = 3;
+  MetricTarget target = 4;
+}
+
+// MetricTarget defines the target value for a metric.
+message MetricTarget {
+  string type = 1;  // average, value
+  string average_value = 2;
+  string value = 3;
+}
+
+// SchedulingConfig defines scheduling preferences.
+message SchedulingConfig {
+  bool cost_aware = 1;
+  repeated string preferred_regions = 2;
+  repeated string preferred_zones = 3;
+  map<string, string> node_selectors = 4;
+  AffinityConfig affinity = 5;
+  repeated Toleration tolerations = 6;
+  string max_cost_per_hour = 7;
+}
+
+// AffinityConfig defines pod affinity/anti-affinity rules.
+message AffinityConfig {
+  NodeAffinity node_affinity = 1;
+  PodAffinity pod_affinity = 2;
+  PodAffinity pod_anti_affinity = 3;
+}
+
+// NodeAffinity defines node affinity rules.
+message NodeAffinity {
+  repeated NodeSelectorTerm required_during_scheduling = 1;
+  repeated PreferredSchedulingTerm preferred_during_scheduling = 2;
+}
+
+// NodeSelectorTerm defines a node selector term.
+message NodeSelectorTerm {
+  repeated NodeSelectorRequirement match_expressions = 1;
+  repeated NodeSelectorRequirement match_fields = 2;
+}
+
+// NodeSelectorRequirement defines a node selector requirement.
+message NodeSelectorRequirement {
+  string key = 1;
+  string operator = 2;  // In, NotIn, Exists, DoesNotExist, Gt, Lt
+  repeated string values = 3;
+}
+
+// PreferredSchedulingTerm defines a preferred scheduling term.
+message PreferredSchedulingTerm {
+  int32 weight = 1;
+  NodeSelectorTerm preference = 2;
+}
+
+// PodAffinity defines pod affinity rules.
+message PodAffinity {
+  repeated PodAffinityTerm required_during_scheduling = 1;
+  repeated WeightedPodAffinityTerm preferred_during_scheduling = 2;
+}
+
+// PodAffinityTerm defines a pod affinity term.
+message PodAffinityTerm {
+  map<string, string> label_selector = 1;
+  repeated string namespaces = 2;
+  string topology_key = 3;
+}
+
+// WeightedPodAffinityTerm defines a weighted pod affinity term.
+message WeightedPodAffinityTerm {
+  int32 weight = 1;
+  PodAffinityTerm pod_affinity_term = 2;
+}
+
+// Toleration defines a toleration for taints.
+message Toleration {
+  string key = 1;
+  string operator = 2;  // Exists, Equal
+  string value = 3;
+  string effect = 4;  // NoSchedule, PreferNoSchedule, NoExecute
+  int64 toleration_seconds = 5;
+}
+
+// CanaryConfig defines canary deployment configuration.
+message CanaryConfig {
+  int32 replicas = 1;
+  int32 percentage = 2;
+  string analysis_duration = 3;
+  int32 success_threshold = 4;
+  repeated string metrics = 5;
+  bool auto_promote = 6;
+}
+
+// ABTestConfig defines A/B testing configuration.
+message ABTestConfig {
+  string variant_a = 1;
+  string variant_b = 2;
+  int32 traffic_split = 3;  // percentage for variant B
+  string analysis_duration = 4;
+  repeated string metrics = 5;
+  bool auto_select_winner = 6;
+}
+
+// Dependency defines a dependency relationship between workloads.
+message Dependency {
+  string workload_id = 1;
+  string type = 2;  // depends_on, waits_for, requires
+  string condition = 3;  // running, healthy, ready
+  string timeout = 4;  // duration string like "5m"
+}
+
+// FailurePrediction defines ML-based failure prediction configuration.
+message FailurePrediction {
+  bool enabled = 1;
+  string model_type = 2;  // simple, ml, custom
+  string prediction_window = 3;
+  double threshold = 4;  // probability threshold (0-1)
+  repeated string features = 5;
+  repeated string mitigation_actions = 6;
+}
+
+// TenantInfo defines multi-tenancy information for a workload.
+message TenantInfo {
+  string id = 1;
+  string name = 2;
+  string namespace = 3;
+  map<string, string> labels = 4;
+  TenantQuota quota = 5;
+  TenantIsolation isolation = 6;
+}
+
+// TenantQuota defines resource quotas for a tenant.
+message TenantQuota {
+  string max_cpu = 1;
+  string max_memory = 2;
+  int32 max_workloads = 3;
+  int32 max_replicas = 4;
+  string max_storage = 5;
+  int32 max_custom_metrics = 6;
+}
+
+// TenantIsolation defines isolation mechanisms for a tenant.
+message TenantIsolation {
+  bool network_policy = 1;
+  bool resource_quota = 2;
+  bool limit_range = 3;
+  bool pod_security_policy = 4;
+  string storage_class = 5;
+}
