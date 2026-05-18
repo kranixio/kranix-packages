@@ -37,6 +37,17 @@ message WorkloadSpec {
   SchedulingConfig scheduling = 14;
   repeated Dependency dependencies = 15;
   FailurePrediction failure_prediction = 16;
+  CrossNamespaceTrafficPolicy cross_namespace_traffic = 17;
+}
+
+// CrossNamespaceTrafficPolicy controls ingress/egress namespace peers for workloads.
+message CrossNamespaceTrafficPolicy {
+  bool enabled = 1;
+  repeated string allowed_ingress_namespaces = 2;
+  repeated string allowed_egress_namespaces = 3;
+  bool allow_same_namespace = 4;
+  bool block_cluster_dns = 5;
+  bool allow_egress_internet = 6;
 }
 
 // ResourceSpec defines compute resource requirements.
@@ -135,6 +146,16 @@ message SchedulingConfig {
   AffinityConfig affinity = 5;
   repeated Toleration tolerations = 6;
   string max_cost_per_hour = 7;
+  string workload_priority = 8;
+  bool preemption_enabled = 9;
+  string priority_class_name = 10;
+  SpotWorkloadConfig spot = 11;
+}
+
+// SpotWorkloadConfig enables spot/preemptible placement semantics.
+message SpotWorkloadConfig {
+  bool enabled = 1;
+  bool reschedule_on_node_termination = 2;
 }
 
 // AffinityConfig defines pod affinity/anti-affinity rules.

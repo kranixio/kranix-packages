@@ -52,6 +52,8 @@ pub struct WorkloadSpec {
     pub dependencies: Vec<Dependency>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure_prediction: Option<FailurePrediction>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "crossNamespaceTraffic")]
+    pub cross_namespace_traffic: Option<CrossNamespaceTrafficPolicy>,
 }
 
 /// Compute resource requirements
@@ -183,6 +185,7 @@ pub struct MetricTarget {
 
 /// Scheduling preferences
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SchedulingConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cost_aware: Option<bool>,
@@ -198,6 +201,40 @@ pub struct SchedulingConfig {
     pub tolerations: Vec<Toleration>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_cost_per_hour: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub workload_priority: Option<String>,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub preemption_enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub priority_class_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spot: Option<SpotWorkloadConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpotWorkloadConfig {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub reschedule_on_node_termination: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CrossNamespaceTrafficPolicy {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub allowed_ingress_namespaces: Vec<String>,
+    #[serde(default)]
+    pub allowed_egress_namespaces: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allow_same_namespace: Option<bool>,
+    #[serde(default, rename = "blockClusterDNS")]
+    pub block_cluster_dns: bool,
+    #[serde(default)]
+    pub allow_egress_internet: bool,
 }
 
 /// Affinity configuration

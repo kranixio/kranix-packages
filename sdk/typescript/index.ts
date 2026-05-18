@@ -18,7 +18,35 @@ export interface WorkloadSpec {
   ports?: PortSpec[];
   backend: string;
   remoteHost?: string;
+  scheduling?: SchedulingConfig;
+  crossNamespaceTraffic?: CrossNamespaceTrafficPolicy;
   [k: string]: unknown;
+}
+
+export interface SpotWorkloadConfig {
+  enabled?: boolean;
+  rescheduleOnNodeTermination?: boolean;
+}
+
+export interface CrossNamespaceTrafficPolicy {
+  enabled?: boolean;
+  allowedIngressNamespaces?: string[];
+  allowedEgressNamespaces?: string[];
+  allowSameNamespace?: boolean;
+  blockClusterDNS?: boolean;
+  allowEgressInternet?: boolean;
+}
+
+export interface SchedulingConfig {
+  costAware?: boolean;
+  preferredRegions?: string[];
+  preferredZones?: string[];
+  nodeSelectors?: Record<string, string>;
+  tolerations?: unknown[];
+  workloadPriority?: string;
+  preemptionEnabled?: boolean;
+  priorityClassName?: string;
+  spot?: SpotWorkloadConfig;
 }
 
 export interface ResourceSpec {

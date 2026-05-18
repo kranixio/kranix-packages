@@ -33,6 +33,8 @@ type WorkloadSpec struct {
 	Scheduling        *SchedulingConfig  `json:"scheduling,omitempty"`
 	Dependencies      []Dependency       `json:"dependencies,omitempty"`
 	FailurePrediction *FailurePrediction `json:"failurePrediction,omitempty"`
+	// CrossNamespaceTraffic restricts namespace-to-namespace traffic when enforced by Kubernetes NetworkPolicy drivers.
+	CrossNamespaceTraffic *CrossNamespaceTrafficPolicy `json:"crossNamespaceTraffic,omitempty"`
 }
 
 // ResourceSpec defines compute resource requirements.
@@ -126,13 +128,43 @@ type MetricTarget struct {
 
 // SchedulingConfig defines scheduling preferences.
 type SchedulingConfig struct {
-	CostAware        bool              `json:"costAware,omitempty"`
-	PreferredRegions []string          `json:"preferredRegions,omitempty"`
-	PreferredZones   []string          `json:"preferredZones,omitempty"`
-	NodeSelectors    map[string]string `json:"nodeSelectors,omitempty"`
-	Affinity         *AffinityConfig   `json:"affinity,omitempty"`
-	Tolerations      []Toleration      `json:"tolerations,omitempty"`
-	MaxCostPerHour   string            `json:"maxCostPerHour,omitempty"`
+	CostAware         bool                `json:"costAware,omitempty"`
+	PreferredRegions  []string            `json:"preferredRegions,omitempty"`
+	PreferredZones    []string            `json:"preferredZones,omitempty"`
+	NodeSelectors     map[string]string   `json:"nodeSelectors,omitempty"`
+	Affinity          *AffinityConfig     `json:"affinity,omitempty"`
+	Tolerations       []Toleration        `json:"tolerations,omitempty"`
+	MaxCostPerHour    string              `json:"maxCostPerHour,omitempty"`
+	WorkloadPriority  string              `json:"workloadPriority,omitempty"`
+	PreemptionEnabled bool                `json:"preemptionEnabled,omitempty"`
+	PriorityClassName string              `json:"priorityClassName,omitempty"`
+	Spot              *SpotWorkloadConfig `json:"spot,omitempty"`
+}
+
+// WorkloadPriority enumerates coarse scheduling tiers.
+type WorkloadPriority string
+
+const (
+	WorkloadPriorityCritical WorkloadPriority = "critical"
+	WorkloadPriorityHigh     WorkloadPriority = "high"
+	WorkloadPriorityNormal   WorkloadPriority = "normal"
+	WorkloadPriorityLow      WorkloadPriority = "low"
+)
+
+// SpotWorkloadConfig configures spot/preemptible placement.
+type SpotWorkloadConfig struct {
+	Enabled                     bool `json:"enabled,omitempty"`
+	RescheduleOnNodeTermination bool `json:"rescheduleOnNodeTermination,omitempty"`
+}
+
+// CrossNamespaceTrafficPolicy controls which namespaces may exchange traffic with this workload via NetworkPolicy.
+type CrossNamespaceTrafficPolicy struct {
+	Enabled                  bool     `json:"enabled,omitempty"`
+	AllowedIngressNamespaces []string `json:"allowedIngressNamespaces,omitempty"`
+	AllowedEgressNamespaces  []string `json:"allowedEgressNamespaces,omitempty"`
+	AllowSameNamespace       *bool    `json:"allowSameNamespace,omitempty"`
+	BlockClusterDNS          bool     `json:"blockClusterDNS,omitempty"`
+	AllowEgressInternet      bool     `json:"allowEgressInternet,omitempty"`
 }
 
 // AffinityConfig defines pod affinity/anti-affinity rules.
