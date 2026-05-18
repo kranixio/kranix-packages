@@ -23,6 +23,12 @@ type mockServer struct {
 	sse            *mockSSE
 	nextWorkloadID int
 	nextPodID      int
+
+	runbooks       map[string]map[string]interface{}
+	executions     map[string]map[string]interface{}
+	nextRunbook    int
+	nextExec       int
+	latencySamples map[string][]float64 // workloadID -> inference latency (ms)
 }
 
 func newMockServer(skipAuth bool) *mockServer {
@@ -37,14 +43,19 @@ func newMockServer(skipAuth bool) *mockServer {
 			},
 		},
 	}
-	return &mockServer{
-		skipAuth:   skipAuth,
-		workloads:  make(map[string]*types.Workload),
-		namespaces: ns,
-		pods:       make(map[string]*types.Pod),
-		workloadPods: make(map[string][]string),
-		sse:        newMockSSE(),
+	s := &mockServer{
+		skipAuth:       skipAuth,
+		workloads:      make(map[string]*types.Workload),
+		namespaces:     ns,
+		pods:           make(map[string]*types.Pod),
+		workloadPods:   make(map[string][]string),
+		sse:            newMockSSE(),
+		runbooks:       make(map[string]map[string]interface{}),
+		executions:     make(map[string]map[string]interface{}),
+		latencySamples: make(map[string][]float64),
 	}
+	s.seedDemoRunbooks()
+	return s
 }
 
 func (s *mockServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -82,6 +93,14 @@ func (s *mockServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if strings.HasPrefix(path, "/api/v1/namespaces") {
 		s.routeNamespaces(w, r)
+		return
+	}
+	if strings.HasPrefix(path, "/api/v1/incident/") {
+		s.routeIncident(w, r)
+		return
+	}
+	if strings.HasPrefix(path, "/api/v1/analytics/") {
+		s.routeAnalytics(w, r)
 		return
 	}
 
