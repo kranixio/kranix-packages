@@ -292,7 +292,7 @@ for frame in subscribe_sse(
 
 ### Mock API server (`kranix-mock-api`)
 
-Run a local process that implements the same URL shapes and JSON models as [kranix-api](../kranix-api) for workloads, namespaces, pod log SSE, `/api/sse` broadcasts, **incident runbooks** (`/api/v1/incident/*`, including `POST .../runbooks/{id}/execute` with a seeded `rb-oncall-pagerduty` playbook), and **analytics** (`POST /api/v1/analytics/metrics`, `GET .../analytics/workloads/{id}?type=latency` for latency percentiles). Point any SDK at `http://localhost:8080` (or any `-addr`).
+Run a local process that implements the same URL shapes and JSON models as [kranix-api](../kranix-api) for workloads, namespaces, pod log SSE, `/api/sse` broadcasts, **incident runbooks** (`/api/v1/incident/*`, including `POST .../runbooks/{id}/execute` with a seeded `rb-oncall-pagerduty` playbook), **analytics** (`POST /api/v1/analytics/metrics`, `GET .../analytics/workloads/{id}?type=latency` for latency percentiles), and **cost** (`GET /api/v1/cost/summary`, `GET /api/v1/workloads/{id}/cost` with mock **rightsizing** hints). Point any SDK at `http://localhost:8080` (or any `-addr`).
 
 ```bash
 go run ./cmd/kranix-mock-api -addr :8080 -skip-auth=true

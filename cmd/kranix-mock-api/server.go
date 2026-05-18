@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -103,6 +104,10 @@ func (s *mockServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.routeAnalytics(w, r)
 		return
 	}
+	if strings.HasPrefix(path, "/api/v1/cost") {
+		s.routeCost(w, r)
+		return
+	}
 
 	http.NotFound(w, r)
 }
@@ -165,6 +170,11 @@ func (s *mockServer) routeWorkloads(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(path, "/pods") {
 			id := segmentBeforeSuffix(path, "/pods")
 			s.listWorkloadPods(w, r, id)
+			return
+		}
+		if strings.HasSuffix(path, "/cost") {
+			id := segmentBeforeSuffix(path, "/cost")
+			s.workloadCost(w, r, id)
 			return
 		}
 		s.getWorkload(w, r, path[strings.LastIndex(path, "/")+1:])
@@ -236,11 +246,20 @@ func (s *mockServer) routeNamespaces(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *mockServer) deployWorkload(w http.ResponseWriter, r *http.Request) {
-	var spec types.WorkloadSpec
-	if err := json.NewDecoder(r.Body).Decode(&spec); err != nil {
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
+	var spec types.WorkloadSpec
+	if err := json.Unmarshal(bodyBytes, &spec); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	var extra struct {
+		Labels map[string]string `json:"labels"`
+	}
+	_ = json.Unmarshal(bodyBytes, &extra)
 	ns := spec.Namespace
 	if ns == "" {
 		ns = "default"
@@ -256,6 +275,7 @@ func (s *mockServer) deployWorkload(w http.ResponseWriter, r *http.Request) {
 		Name:      spec.Name,
 		Namespace: ns,
 		Spec:      spec,
+		Labels:    extra.Labels,
 		Status: types.WorkloadStatus{
 			Phase:         types.WorkloadPhaseRunning,
 			ReadyReplicas: spec.Replicas,
@@ -326,11 +346,20 @@ func (s *mockServer) getWorkload(w http.ResponseWriter, _ *http.Request, id stri
 }
 
 func (s *mockServer) updateWorkload(w http.ResponseWriter, r *http.Request, id string) {
-	var spec types.WorkloadSpec
-	if err := json.NewDecoder(r.Body).Decode(&spec); err != nil {
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
+	var spec types.WorkloadSpec
+	if err := json.Unmarshal(bodyBytes, &spec); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	var extra struct {
+		Labels map[string]string `json:"labels"`
+	}
+	_ = json.Unmarshal(bodyBytes, &extra)
 	s.mu.Lock()
 	wl, ok := s.workloads[id]
 	if !ok {
@@ -339,6 +368,14 @@ func (s *mockServer) updateWorkload(w http.ResponseWriter, r *http.Request, id s
 		return
 	}
 	wl.Spec = spec
+	if len(extra.Labels) > 0 {
+		if wl.Labels == nil {
+			wl.Labels = map[string]string{}
+		}
+		for k, v := range extra.Labels {
+			wl.Labels[k] = v
+		}
+	}
 	wl.UpdatedAt = time.Now().UTC()
 	wl.Status.LastUpdated = wl.UpdatedAt
 	s.mu.Unlock()
