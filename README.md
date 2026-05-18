@@ -2,7 +2,7 @@
 
 > Shared SDK — types, utilities, and client libraries for the Kranix ecosystem.
 
-`kranix-packages` is the common foundation imported by every other Kranix repo and by third-party tools building on top of Kranix. It contains shared domain types, the `RuntimeDriver` interface, error codes, logging utilities, config schemas, auth primitives, and the public SDK client for Go and TypeScript consumers.
+`kranix-packages` is the common foundation imported by every other Kranix repo and by third-party tools building on top of Kranix. It contains shared domain types, the `RuntimeDriver` interface, error codes, logging utilities, config schemas, auth primitives, and public SDK clients for **Go**, **TypeScript**, and **Python** consumers. A **`kranix-mock-api`** binary provides a faithful in-memory API + SSE surface for unit and integration tests in any language.
 
 All cross-cutting concerns that are needed by more than one repo live here. Nothing here contains business logic — that belongs in `kranix-core`.
 
@@ -24,8 +24,10 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 | `config` | Config schema definitions and loader |
 | `auth` | Token types, validation helpers, RBAC primitives, OIDC support |
 | `runtime` | The `RuntimeDriver` interface (implemented by kranix-runtime) |
-| `sdk/go` | Public Go client for the kranix-api |
-| `sdk/typescript` | Public TypeScript/Node.js client for the kranix-api |
+| `sdk/go` | Public Go client for the kranix-api (REST + SSE event subscription) |
+| `sdk/typescript` | Public TypeScript/Node.js client for the kranix-api (REST + SSE) |
+| `sdk/python` | Public Python client (`kranix-io-sdk` on PyPI layout) for ML / data workflows |
+| `cmd/kranix-mock-api` | Local mock HTTP server mirroring core REST + `/api/sse` for tests |
 | `proto` | Shared protobuf definitions and generated Go/TS stubs |
 
 ---
@@ -39,7 +41,7 @@ kranix-mcp     ──┼──►  kranix-packages
 kranix-cli     ──┤
 kranix-runtime ──┘
 
-Third-party tools  ──►  kranix-packages (SDK)
+Third-party tools  ──►  kranix-packages (Go / TS / Python SDK + mock API)
 ```
 
 `kranix-packages` has no dependencies on any other Kranix repo. The dependency arrow always points *toward* packages, never away.
@@ -156,18 +158,20 @@ import kraneclient "github.com/kranix-io/kranix-packages/sdk/go"
 client, err := kraneclient.New(&kraneclient.Config{
     ServerURL: "http://localhost:8080",
     APIKey:    "krane_your_key",
+    SkipAuth:  true, // for kranix-mock-api default
 })
 
 // Deploy a workload
-workload, err := client.Workloads.Deploy(ctx, &types.WorkloadSpec{
+workload, err := client.Workloads().Deploy(ctx, &types.WorkloadSpec{
     Name:      "my-app",
     Image:     "nginx:latest",
     Namespace: "staging",
     Replicas:  2,
+    Backend:   "docker",
 })
 
 // Stream logs
-logCh, err := client.Pods.StreamLogs(ctx, podID, &types.LogOptions{
+logCh, err := client.Pods().StreamLogs(ctx, podID, &types.LogOptions{
     Follow: true,
     Tail:   100,
 })
@@ -176,8 +180,16 @@ for line := range logCh {
 }
 
 // Analyze a workload
-analysis, err := client.Workloads.Analyze(ctx, workload.ID)
+analysis, err := client.Workloads().Analyze(ctx, workload.ID)
 fmt.Println(analysis.ProbableFix)
+
+// Live events (GET /api/sse) — workload.changed, workload.deleted, ...
+_ = client.SubscribeSSE(ctx, &kraneclient.SubscribeOptions{
+    Namespaces: []string{"staging"},
+}, func(ev kraneclient.SSEEvent) error {
+    fmt.Println(ev.Event, string(ev.Data))
+    return nil
+})
 ```
 
 ### TypeScript SDK
@@ -192,6 +204,7 @@ import { KraneClient } from "@kranix-io/sdk";
 const client = new KraneClient({
   serverUrl: "http://localhost:8080",
   apiKey: "krane_your_key",
+  skipAuth: true,
 });
 
 // Deploy
@@ -210,7 +223,82 @@ for await (const line of client.pods.streamLogs(podId, { follow: true })) {
 // Analyze
 const analysis = await client.workloads.analyze(workload.id);
 console.log(analysis.probableFix);
+
+// Subscribe to workload / platform events (GET /api/sse)
+for await (const frame of client.subscribeWorkloadEvents({
+  namespaces: ["staging"],
+})) {
+  if (frame.event === "workload.changed") {
+    console.log(frame.data);
+  }
+}
 ```
+
+### Python SDK
+
+```bash
+cd sdk/python && pip install .
+```
+
+```python
+from kranix_sdk import KraneClient
+from kranix_sdk.events import subscribe_sse, workload_event_payload_json
+
+client = KraneClient(
+    "http://localhost:8080",
+    api_key="krane_your_key",
+    skip_auth=True,  # use with kranix-mock-api -skip-auth (default)
+)
+
+wl = client.workloads.deploy({
+    "name": "trainer",
+    "image": "pytorch/pytorch:latest",
+    "namespace": "default",
+    "replicas": 1,
+    "backend": "docker",
+})
+
+for line in client.pods.stream_logs("pod-1", follow=True, tail=100):
+    print(line)
+
+for frame in subscribe_sse(
+    "http://localhost:8080",
+    None,
+    skip_auth=True,
+    namespaces=["default"],
+):
+    payload = workload_event_payload_json(frame)
+    if payload:
+        print(frame.event, payload)
+```
+
+### Mock API server (`kranix-mock-api`)
+
+Run a local process that implements the same URL shapes and JSON models as [kranix-api](../kranix-api) for workloads, namespaces, pod log SSE, and `/api/sse` broadcasts. Point any SDK (`ServerURL` / `serverUrl` / `server_url`) at `http://localhost:8080` (or any `-addr`).
+
+```bash
+go run ./cmd/kranix-mock-api -addr :8080 -skip-auth=true
+# Production-shaped auth check:
+# KRANIX_MOCK_REQUIRE_AUTH=1 go run ./cmd/kranix-mock-api -skip-auth=false
+# then pass a krane_* API key in the Authorization header from the SDK.
+```
+
+Environment hints:
+
+| Variable | Effect |
+|----------|--------|
+| `KRANIX_MOCK_ADDR` | Overrides `-addr` listen address |
+| `KRANIX_MOCK_REQUIRE_AUTH=1` | Forces `-skip-auth=false` (require `Bearer krane_*`) |
+
+### Event subscription (SSE)
+
+All first-class SDKs can consume `GET /api/sse` using the same query parameters as kranix-api (`client_id`, repeated `namespace`). Incoming frames use named events such as `connected`, `workload.changed`, and `workload.deleted`. Integration tests can also `POST /api/sse/broadcast` (see kranix-api docs) to inject synthetic events.
+
+| SDK | API |
+|-----|-----|
+| Go | `client.SubscribeSSE(ctx, &SubscribeOptions{...}, handler)` |
+| TypeScript | `for await (const f of client.subscribeWorkloadEvents({...}))` |
+| Python | `subscribe_sse(...)` or `KraneClient.subscribe_workload_events()` |
 
 ---
 
@@ -249,33 +337,37 @@ Standard fields used across all repos:
 
 ## Project structure
 
-```├s.go
-│   ├── ratelimit.go         # Rate limiting & quota types
-│   ├── sse.go               # SSE streaming types
-│   ├── apiversion.go        # API versioning types
-│   ├── analytics.go         # Analytics & metrics types
-│   ├── veriono           # Semantic versining types
-│   ├── webhook.go           # Webhook types
-│   └── auth.go              # Authentication types
+```
 kranix-packages/
+├── cmd/
+│   └── kranix-mock-api/   # Mock HTTP API for local / CI tests
 ├── types/                  # Core domain types
 │   ├── workload.go
 │   ├── pod.go
-│   ├── namespace.go
-│   └── status.go
-├── errors/                 # Typed error codes
-├── logging/                # Shared logger
-├── config/                 # Config schema and loader
-├── auth/                   # Token types and validation
-├── runtime/                # RuntimeDriver interface
-├── proto/                  # Protobuf definitions + generated stubs
-│   ├── *.proto
-│   └── gen/
-│       ├── go/
-│       └── ts/
+│   └── ...
+├── errors/
+├── logging/
+├── config/
+├── auth/
+├── runtime/
+├── proto/
 └── sdk/
-    ├── go/                 # Public Go SDK
-    └── typescript/         # Public TypeScript SDK
+    ├── go/
+    ├── typescript/
+    └── python/
+```
+
+### Older reference (domain type files)
+
+```
+types/
+├── ratelimit.go
+├── sse.go
+├── apiversion.go
+├── analytics.go
+├── version.go
+├── webhook.go
+└── ...
 ```
 
 ---
@@ -417,7 +509,7 @@ Provides support for remote SSH backend:
 | `kranix-cli` | Imports types, errors, Go SDK |
 | `kranix-runtime` | Implements RuntimeDriver interface |
 | `kranix-operator` | Imports CRD types (re-exported from types package) |
-| Third-party tools | Consume Go SDK or TypeScript SDK |
+| Third-party tools | Consume Go, TypeScript, or Python SDK; use `kranix-mock-api` in CI |
 
 ---
 

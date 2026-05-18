@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "kranix",
@@ -17,8 +18,5 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "node-fetch": "^3.0.0"
   }
 }

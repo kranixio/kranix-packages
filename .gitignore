@@ -1,0 +1,57 @@
+# Go
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/vendor/
+
+# Node / TypeScript SDK
+node_modules/
+sdk/typescript/node_modules/
+dist/
+sdk/typescript/dist/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python SDK
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.eggs/
+*.egg-info/
+sdk/python/build/
+sdk/python/dist/
+
+# Builds & coverage
+coverage.out
+*.cover
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
+
+# Binaries from local go build
+/kranix-mock-api
+/*.exe
