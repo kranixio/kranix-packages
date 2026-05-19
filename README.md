@@ -502,6 +502,12 @@ Provides types for GPU workload scheduling:
 
 - **`SecretRotationSpec`** / **`SecretRotationStatus`** on workload spec/status — link secrets via **`secretRefs`**; core triggers rolling restarts on version change (`POST /api/v1/secrets/rotated` on core HTTP API).
 
+### Diff, search, and quota APIs (`types/diff.go`, `types/search.go`, `types/quota.go`)
+
+- **`WorkloadDiffResult`** — desired vs live field changes for `GET /workloads/:id/diff`.
+- **`WorkloadSearchQuery`** — filters for `GET /workloads` (`namespace`, `phase`, `image`, tags).
+- **`ResourceQuotaUsage`** / **`HardResourceQuota`** — namespace limits and usage via `/api/v1/quotas`.
+
 ### Bulk & audit (`types/bulk.go`, `types/audit.go`)
 
 - **`BulkWorkloadRequest`** / **`BulkWorkloadResponse`** — batch **deploy**, **restart**, or **delete** via **`POST /api/v1/workloads/bulk`** on kranix-api.

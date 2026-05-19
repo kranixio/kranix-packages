@@ -10,3 +10,24 @@ type HardResourceQuota struct {
 	MaxWorkloads      int32  `json:"maxWorkloads,omitempty"`
 	MaxReplicasTotal  int32  `json:"maxReplicasTotal,omitempty"`
 }
+
+// ResourceQuotaUsage reports limits and current aggregate usage for a namespace.
+type ResourceQuotaUsage struct {
+	Namespace string            `json:"namespace"`
+	Limits    HardResourceQuota `json:"limits"`
+	Used      QuotaUsageTotals  `json:"used"`
+}
+
+// QuotaUsageTotals is observed consumption against a namespace quota.
+type QuotaUsageTotals struct {
+	WorkloadCount  int    `json:"workloadCount"`
+	ReplicaCount   int32  `json:"replicaCount"`
+	CPURequests    string `json:"cpuRequests,omitempty"`
+	MemoryRequests string `json:"memoryRequests,omitempty"`
+}
+
+// ResourceQuotaListResponse lists namespace quotas.
+type ResourceQuotaListResponse struct {
+	Quotas []HardResourceQuota `json:"quotas"`
+	Count  int                 `json:"count"`
+}
