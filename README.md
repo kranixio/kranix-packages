@@ -498,6 +498,11 @@ Provides types for GPU workload scheduling:
 
 - **`CrossNamespaceTrafficPolicy`** on **`WorkloadSpec`** (`crossNamespaceTraffic`): **`enabled`**, **`allowedIngressNamespaces`**, **`allowedEgressNamespaces`**, **`allowSameNamespace`**, **`blockClusterDNS`**, **`allowEgressInternet`** — consumed when creating **NetworkPolicies** on the Kubernetes backend.
 
+### Resilience — circuit breaker & warm standby (`types/resilience.go`)
+
+- **`CircuitBreakerSpec`** / **`CircuitBreakerStatus`** on workload spec/status (`circuitBreaker`): failure/success thresholds, open duration, half-open probe limits, optional **`tripOnDegraded`**. States: `closed`, `open`, `half-open`.
+- **`WarmStandbySpec`** / **`WarmStandbyStatus`** (`warmStandby`): cold standby replica count, **`autoPromote`**, optional **`standbyWorkloadId`**. Standby workloads use labels **`kranix.io/standby-for`** and **`kranix.io/role=standby`** (see `types/tags.go`).
+
 ### Ephemeral Environments (`types/workload.go`)
 
 Provides types for ephemeral environment lifecycle management:

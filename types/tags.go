@@ -5,6 +5,9 @@ const (
 	LabelKeyTeam        = "kranix.io/team"
 	LabelKeyEnvironment = "kranix.io/environment"
 	LabelKeyCostCenter  = "kranix.io/cost-center"
+	LabelKeyStandbyFor  = "kranix.io/standby-for"
+	LabelKeyRole        = "kranix.io/role"
+	LabelRoleStandby    = "standby"
 )
 
 // WorkloadTags groups structured tags for team, environment, and cost center.

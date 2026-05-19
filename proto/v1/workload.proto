@@ -58,6 +58,8 @@ message WorkloadSpec {
   FailurePrediction failure_prediction = 16;
   CrossNamespaceTrafficPolicy cross_namespace_traffic = 17;
   CronScheduleSpec cron_schedule = 18;
+  CircuitBreakerSpec circuit_breaker = 19;
+  WarmStandbySpec warm_standby = 20;
 }
 
 // CronScheduleSpec defines optional periodic reconcile/deploy triggers (standard 5-field cron).
@@ -135,6 +137,42 @@ message WorkloadStatus {
   int64 last_updated = 13;  // Unix timestamp in seconds
   CronScheduleStatus cron = 14;
   RollbackHistoryStatus rollback = 15;
+  CircuitBreakerStatus circuit_breaker = 16;
+  WarmStandbyStatus warm_standby = 17;
+}
+
+message CircuitBreakerSpec {
+  bool enabled = 1;
+  int32 failure_threshold = 2;
+  int32 success_threshold = 3;
+  int32 open_duration_seconds = 4;
+  int32 half_open_max_requests = 5;
+  bool trip_on_degraded = 6;
+}
+
+message CircuitBreakerStatus {
+  string state = 1;
+  int32 consecutive_fails = 2;
+  int32 consecutive_ok = 3;
+  int32 half_open_attempts = 4;
+  int64 last_transition = 5;
+  int64 open_until = 6;
+  string message = 7;
+}
+
+message WarmStandbySpec {
+  bool enabled = 1;
+  int32 replicas = 2;
+  bool auto_promote = 3;
+  string standby_workload_id = 4;
+}
+
+message WarmStandbyStatus {
+  string standby_workload_id = 1;
+  string phase = 2;
+  int32 ready_replicas = 3;
+  int64 last_failover = 4;
+  string message = 5;
 }
 
 message RollbackHistoryStatus {

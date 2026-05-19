@@ -42,6 +42,12 @@ type WorkloadSpec struct {
 	CronSchedule *CronScheduleSpec `json:"cronSchedule,omitempty"`
 	// Tags classify the workload (team, environment, cost center); mirrored to standard kranix.io/* labels on Kubernetes.
 	Tags *WorkloadTags `json:"tags,omitempty"`
+	// CircuitBreaker stops routing while unhealthy or when the circuit is open.
+	CircuitBreaker *CircuitBreakerSpec `json:"circuitBreaker,omitempty"`
+	// WarmStandby keeps a cold replica workload ready for instant failover.
+	WarmStandby *WarmStandbySpec `json:"warmStandby,omitempty"`
+	// Labels are optional workload labels propagated to Kubernetes (e.g. warm standby role).
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // ResourceSpec defines compute resource requirements.
@@ -85,7 +91,9 @@ type WorkloadStatus struct {
 	Message       string        `json:"message,omitempty"`
 	LastUpdated   time.Time     `json:"lastUpdated"`
 	Cron          *CronScheduleStatus `json:"cron,omitempty"`
-	Rollback      *RollbackHistoryStatus `json:"rollback,omitempty"`
+	Rollback        *RollbackHistoryStatus `json:"rollback,omitempty"`
+	CircuitBreaker  *CircuitBreakerStatus  `json:"circuitBreaker,omitempty"`
+	WarmStandby     *WarmStandbyStatus     `json:"warmStandby,omitempty"`
 }
 
 // CronScheduleSpec defines optional periodic execution (standard 5-field cron, e.g. "0 * * * *").
