@@ -17,6 +17,25 @@ message Workload {
   int64 updated_at = 7;  // Unix timestamp in seconds
   map<string, string> labels = 8;
   TenantInfo tenant = 9;
+  WorkloadTags tags = 10;
+  repeated WorkloadRevision rollback_versions = 11;
+}
+
+// WorkloadTags groups team, environment, and cost-center tags for filtering and billing.
+message WorkloadTags {
+  string team = 1;
+  string environment = 2;
+  string cost_center = 3;
+  map<string, string> custom = 4;
+}
+
+// WorkloadRevision is a retained spec snapshot for rollback.
+message WorkloadRevision {
+  string id = 1;
+  int64 recorded_at = 2;
+  WorkloadSpec spec = 3;
+  WorkloadTags tags = 4;
+  string change_reason = 5;
 }
 
 // WorkloadSpec defines the desired configuration of a workload.
@@ -115,6 +134,13 @@ message WorkloadStatus {
   string message = 12;
   int64 last_updated = 13;  // Unix timestamp in seconds
   CronScheduleStatus cron = 14;
+  RollbackHistoryStatus rollback = 15;
+}
+
+message RollbackHistoryStatus {
+  int32 max_versions = 1;
+  int32 count = 2;
+  string active_revision_id = 3;
 }
 
 // WorkloadPhase represents the lifecycle phase of a workload.

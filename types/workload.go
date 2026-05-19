@@ -12,7 +12,10 @@ type Workload struct {
 	CreatedAt time.Time         `json:"createdAt"`
 	UpdatedAt time.Time         `json:"updatedAt"`
 	Labels    map[string]string `json:"labels,omitempty"`
+	Tags      *WorkloadTags     `json:"tags,omitempty"`
 	Tenant    *TenantInfo       `json:"tenant,omitempty"`
+	// RollbackVersions holds the last N spec snapshots (newest first).
+	RollbackVersions []WorkloadRevision `json:"rollbackVersions,omitempty"`
 }
 
 // WorkloadSpec defines the desired configuration of a workload.
@@ -37,6 +40,8 @@ type WorkloadSpec struct {
 	CrossNamespaceTraffic *CrossNamespaceTrafficPolicy `json:"crossNamespaceTraffic,omitempty"`
 	// CronSchedule enables cron-style scheduling in core; Kubernetes runtime maps this to a CronJob when set.
 	CronSchedule *CronScheduleSpec `json:"cronSchedule,omitempty"`
+	// Tags classify the workload (team, environment, cost center); mirrored to standard kranix.io/* labels on Kubernetes.
+	Tags *WorkloadTags `json:"tags,omitempty"`
 }
 
 // ResourceSpec defines compute resource requirements.
@@ -80,6 +85,7 @@ type WorkloadStatus struct {
 	Message       string        `json:"message,omitempty"`
 	LastUpdated   time.Time     `json:"lastUpdated"`
 	Cron          *CronScheduleStatus `json:"cron,omitempty"`
+	Rollback      *RollbackHistoryStatus `json:"rollback,omitempty"`
 }
 
 // CronScheduleSpec defines optional periodic execution (standard 5-field cron, e.g. "0 * * * *").
