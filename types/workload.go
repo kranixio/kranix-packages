@@ -46,6 +46,8 @@ type WorkloadSpec struct {
 	CircuitBreaker *CircuitBreakerSpec `json:"circuitBreaker,omitempty"`
 	// WarmStandby keeps a cold replica workload ready for instant failover.
 	WarmStandby *WarmStandbySpec `json:"warmStandby,omitempty"`
+	// SecretRotation triggers rolling restarts when referenced secrets change.
+	SecretRotation *SecretRotationSpec `json:"secretRotation,omitempty"`
 	// Labels are optional workload labels propagated to Kubernetes (e.g. warm standby role).
 	Labels map[string]string `json:"labels,omitempty"`
 }
@@ -94,6 +96,7 @@ type WorkloadStatus struct {
 	Rollback        *RollbackHistoryStatus `json:"rollback,omitempty"`
 	CircuitBreaker  *CircuitBreakerStatus  `json:"circuitBreaker,omitempty"`
 	WarmStandby     *WarmStandbyStatus     `json:"warmStandby,omitempty"`
+	SecretRotation  *SecretRotationStatus  `json:"secretRotation,omitempty"`
 }
 
 // CronScheduleSpec defines optional periodic execution (standard 5-field cron, e.g. "0 * * * *").

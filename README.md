@@ -498,6 +498,15 @@ Provides types for GPU workload scheduling:
 
 - **`CrossNamespaceTrafficPolicy`** on **`WorkloadSpec`** (`crossNamespaceTraffic`): **`enabled`**, **`allowedIngressNamespaces`**, **`allowedEgressNamespaces`**, **`allowSameNamespace`**, **`blockClusterDNS`**, **`allowEgressInternet`** — consumed when creating **NetworkPolicies** on the Kubernetes backend.
 
+### Secret rotation (`types/secrets.go`)
+
+- **`SecretRotationSpec`** / **`SecretRotationStatus`** on workload spec/status — link secrets via **`secretRefs`**; core triggers rolling restarts on version change (`POST /api/v1/secrets/rotated` on core HTTP API).
+
+### Bulk & audit (`types/bulk.go`, `types/audit.go`)
+
+- **`BulkWorkloadRequest`** / **`BulkWorkloadResponse`** — batch **deploy**, **restart**, or **delete** via **`POST /api/v1/workloads/bulk`** on kranix-api.
+- **`AuditEntry`** / **`AuditQuery`** — API audit trail; combine with core domain events via **`GET /api/v1/audit/resources/{type}/{id}`**.
+
 ### Resilience — circuit breaker & warm standby (`types/resilience.go`)
 
 - **`CircuitBreakerSpec`** / **`CircuitBreakerStatus`** on workload spec/status (`circuitBreaker`): failure/success thresholds, open duration, half-open probe limits, optional **`tripOnDegraded`**. States: `closed`, `open`, `half-open`.
