@@ -2,7 +2,9 @@ package types
 
 // WorkloadSearchQuery filters workloads in list/search APIs.
 type WorkloadSearchQuery struct {
-	Namespace   string `json:"namespace,omitempty"`
+	// AllNamespaces when true lists workloads across every namespace (ignores Namespace filter).
+	AllNamespaces bool   `json:"allNamespaces,omitempty"`
+	Namespace     string `json:"namespace,omitempty"`
 	Phase       string `json:"phase,omitempty"`       // Pending | Running | Degraded | Failed
 	Status      string `json:"status,omitempty"`      // alias for phase
 	Image       string `json:"image,omitempty"`       // substring match

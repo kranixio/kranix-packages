@@ -156,6 +156,8 @@ type APIKey struct {
 	CreatedBy   string       `json:"createdBy,omitempty"`
 	TenantID    string       `json:"tenantId,omitempty"`
 	Revoked     bool         `json:"revoked"`
+	// AllowedIPs restricts which client IPs may use this key (empty = any).
+	AllowedIPs []string `json:"allowedIps,omitempty"`
 }
 
 // HasPermission checks if an API key has a specific permission.
