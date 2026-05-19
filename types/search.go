@@ -13,9 +13,10 @@ type WorkloadSearchQuery struct {
 	LabelValue  string `json:"labelValue,omitempty"`
 }
 
-// WorkloadListResponse is returned by filtered workload list endpoints.
+// WorkloadListResponse is returned by filtered workload list endpoints (non-paginated legacy).
 type WorkloadListResponse struct {
-	Workloads []Workload     `json:"workloads"`
-	Count     int            `json:"count"`
+	Workloads []Workload          `json:"workloads"`
+	Count     int                 `json:"count"`
 	Query     WorkloadSearchQuery `json:"query,omitempty"`
+	PageInfo  *PageInfo           `json:"pageInfo,omitempty"`
 }

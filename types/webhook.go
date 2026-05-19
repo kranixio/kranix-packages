@@ -33,6 +33,8 @@ const (
 	WebhookEventDriftDetected    WebhookEvent = "drift.detected"
 	WebhookEventRollbackStart    WebhookEvent = "rollback.start"
 	WebhookEventRollbackComplete WebhookEvent = "rollback.complete"
+	// WebhookEventChangelogBreaking fires when a breaking API changelog release is published.
+	WebhookEventChangelogBreaking WebhookEvent = "changelog.breaking"
 )
 
 // WebhookDelivery represents a webhook delivery attempt.

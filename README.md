@@ -502,6 +502,11 @@ Provides types for GPU workload scheduling:
 
 - **`SecretRotationSpec`** / **`SecretRotationStatus`** on workload spec/status — link secrets via **`secretRefs`**; core triggers rolling restarts on version change (`POST /api/v1/secrets/rotated` on core HTTP API).
 
+### Pagination & changelog notifications (`pagination/cursor.go`, `types/pagination.go`, `types/changelog_notify.go`)
+
+- **Cursor pagination** — shared `kranix-packages/pagination` package; `limit` + `cursor` on `GET /workloads` and `GET /changelog`.
+- **`ChangelogSubscription`** — webhook/email alerts for breaking API releases; event `changelog.breaking` on the webhook system.
+
 ### Diff, search, and quota APIs (`types/diff.go`, `types/search.go`, `types/quota.go`)
 
 - **`WorkloadDiffResult`** — desired vs live field changes for `GET /workloads/:id/diff`.
