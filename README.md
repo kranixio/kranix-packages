@@ -13,7 +13,9 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 | Package | Description |
 |---|---|
 | `types` | Core domain types (Workload, Pod, Namespace, Status, quotas, cron fields, …) |
-| `types/mcp.go` | MCP tool chaining, cluster health, action suggestions, and event subscription types |
+| `types/template.go` | KranixApp template generation request/response types |
+| `template/` | KranixApp manifest generator from natural language descriptions |
+| `types/mcp.go` | MCP tool chaining, cluster health, action suggestions, event subscription, and tool version metadata |
 | `types/approval.go` | Human approval gate request/record types for destructive MCP actions |
 | `types/cost.go` | Pre-deploy cost estimate request/response types |
 | `types/rollback.go` | Workload revision snapshots and rollback request/result types |
@@ -552,6 +554,14 @@ Shared contracts for **kranix-mcp** and **kranix-api** MCP integration:
 - **`ApprovalCreateRequest`** — agent requests human confirmation before a destructive tool
 - **`ApprovalRecord`** — pending/approved/denied/expired gate with tool, inputs, and TTL
 - **`ApprovalResolveRequest`** — operator approves or denies a pending gate
+
+**KranixApp templates (`types/template.go`, `template/kranixapp.go`):**
+- **`KranixAppTemplateRequest`** — description plus optional overrides (name, image, profile, features)
+- **`KranixAppTemplateResponse`** — generated YAML, parsed fields, and confidence score
+- **`GenerateKranixApp`** — builds `kranix.io/v1alpha1` manifests with profile presets (`basic`, `production`, `spot`, `cron`)
+
+**MCP tool versioning (`types/mcp.go`):**
+- **`MCPToolVersionMeta`** — `version`, `deprecated`, `replacedBy` fields exposed in `tools/list`
 
 **Analysis (`types/status.go`):**
 - **`AnalysisResult`** — extended with **`Suggestions []string`** for remediation hints alongside `Issues` and `ProbableFix`

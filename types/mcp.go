@@ -92,3 +92,10 @@ type ClusterEventBatch struct {
 	Count    int                `json:"count"`
 	TimedOut bool               `json:"timedOut"`
 }
+
+// MCPToolVersionMeta describes version metadata exposed in tools/list.
+type MCPToolVersionMeta struct {
+	Version    string `json:"version"`
+	Deprecated bool   `json:"deprecated,omitempty"`
+	ReplacedBy string `json:"replacedBy,omitempty"`
+}
