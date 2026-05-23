@@ -13,7 +13,8 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 | Package | Description |
 |---|---|
 | `types` | Core domain types (Workload, Pod, Namespace, Status, quotas, cron fields, …) |
-| `types/mcp.go` | MCP tool chaining, cluster health, and action suggestion types |
+| `types/mcp.go` | MCP tool chaining, cluster health, action suggestions, and event subscription types |
+| `types/approval.go` | Human approval gate request/record types for destructive MCP actions |
 | `types/cost.go` | Pre-deploy cost estimate request/response types |
 | `types/rollback.go` | Workload revision snapshots and rollback request/result types |
 | `cost/` | Shared deployment cost estimator used by kranix-api and kranix-mock-api |
@@ -542,6 +543,15 @@ Shared contracts for **kranix-mcp** and **kranix-api** MCP integration:
 - **`ClusterHealth`** — cluster-wide status (`healthy`, `degraded`, `critical`), node/pod counts
 - **`ActionSuggestion`** — recommended next MCP tool with reason, priority, and optional inputs
 - **`SuggestionsResponse`** — bundled suggestions with cluster status and context
+
+**Real-time events (`types/mcp.go`):**
+- **`ClusterEventSubscriptionRequest`** — namespace/event filters and poll window for SSE collection
+- **`ClusterEventItem`** / **`ClusterEventBatch`** — events returned by `subscribe_cluster_events`
+
+**Approval gate (`types/approval.go`):**
+- **`ApprovalCreateRequest`** — agent requests human confirmation before a destructive tool
+- **`ApprovalRecord`** — pending/approved/denied/expired gate with tool, inputs, and TTL
+- **`ApprovalResolveRequest`** — operator approves or denies a pending gate
 
 **Analysis (`types/status.go`):**
 - **`AnalysisResult`** — extended with **`Suggestions []string`** for remediation hints alongside `Issues` and `ProbableFix`

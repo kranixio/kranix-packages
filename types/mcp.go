@@ -68,3 +68,27 @@ type SuggestionsResponse struct {
 	Suggestions   []ActionSuggestion `json:"suggestions"`
 	GeneratedAt   time.Time          `json:"generated_at"`
 }
+
+// ClusterEventSubscriptionRequest configures a real-time event subscription poll.
+type ClusterEventSubscriptionRequest struct {
+	Namespaces     []string `json:"namespaces,omitempty"`
+	EventTypes     []string `json:"eventTypes,omitempty"`
+	TimeoutSeconds int      `json:"timeoutSeconds,omitempty"`
+	MaxEvents      int      `json:"maxEvents,omitempty"`
+	ClientID       string   `json:"clientId,omitempty"`
+}
+
+// ClusterEventItem is one SSE frame delivered to an agent.
+type ClusterEventItem struct {
+	ID         string      `json:"id"`
+	Event      string      `json:"event"`
+	Data       interface{} `json:"data,omitempty"`
+	ReceivedAt time.Time   `json:"receivedAt"`
+}
+
+// ClusterEventBatch is the result of subscribe_cluster_events.
+type ClusterEventBatch struct {
+	Events   []ClusterEventItem `json:"events"`
+	Count    int                `json:"count"`
+	TimedOut bool               `json:"timedOut"`
+}
