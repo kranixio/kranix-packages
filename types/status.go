@@ -21,10 +21,12 @@ type Condition struct {
 
 // AnalysisResult represents the result of a workload analysis.
 type AnalysisResult struct {
-	WorkloadID   string `json:"workloadId"`
-	Status       string `json:"status"`
-	Issues       []Issue `json:"issues,omitempty"`
-	ProbableFix  string `json:"probableFix,omitempty"`
+	WorkloadID   string    `json:"workloadId"`
+	Namespace    string    `json:"namespace,omitempty"`
+	Status       string    `json:"status"`
+	Issues       []Issue   `json:"issues,omitempty"`
+	Suggestions  []string  `json:"suggestions,omitempty"`
+	ProbableFix  string    `json:"probableFix,omitempty"`
 	AnalyzedAt   time.Time `json:"analyzedAt"`
 }
 

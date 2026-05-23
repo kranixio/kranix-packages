@@ -13,6 +13,7 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 | Package | Description |
 |---|---|
 | `types` | Core domain types (Workload, Pod, Namespace, Status, quotas, cron fields, …) |
+| `types/mcp.go` | MCP tool chaining, cluster health, and action suggestion types |
 | `types/ratelimit` | Rate limiting and quota types |
 | `types/sse` | Server-Sent Events streaming types |
 | `types/apiversion` | API versioning and routing types |
@@ -22,7 +23,7 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 | `errors` | Typed error codes and wrapping utilities |
 | `logging` | Structured logger (zap-based) with consistent field conventions |
 | `config` | Config schema definitions and loader |
-| `auth` | Token types, validation helpers, RBAC primitives, OIDC support |
+| `auth` | Token types, validation helpers, RBAC primitives, OIDC support, **agent identity & impersonation guard** |
 | `runtime` | The `RuntimeDriver` interface (implemented by kranix-runtime) |
 | `sdk/go` | Public Go client for the kranix-api (REST + SSE event subscription) |
 | `sdk/typescript` | Public TypeScript/Node.js client for the kranix-api (REST + SSE) |
@@ -363,11 +364,14 @@ kranix-packages/
 ├── types/                  # Core domain types
 │   ├── workload.go
 │   ├── pod.go
+│   ├── mcp.go             # Tool chaining, suggestions, cluster health
 │   └── ...
 ├── errors/
 ├── logging/
 ├── config/
 ├── auth/
+│   ├── auth.go
+│   └── agent.go           # Agent identity & impersonation guard
 ├── runtime/
 ├── proto/                  # Versioned protobuf definitions
 │   ├── v1/                # Proto version 1
@@ -518,6 +522,41 @@ Provides types for GPU workload scheduling:
 - **`BulkWorkloadRequest`** / **`BulkWorkloadResponse`** — batch **deploy**, **restart**, or **delete** via **`POST /api/v1/workloads/bulk`** on kranix-api.
 - **`AuditEntry`** / **`AuditQuery`** — API audit trail; combine with core domain events via **`GET /api/v1/audit/resources/{type}/{id}`**.
 
+### MCP & agent types (`types/mcp.go`, `auth/agent.go`)
+
+Shared contracts for **kranix-mcp** and **kranix-api** MCP integration:
+
+**Tool chaining (`types/mcp.go`):**
+- **`ToolChainStep`** — single step in a composed chain (`tool`, `inputs`, `on_failure`)
+- **`ToolChainRequest`** / **`ToolChainResult`** — request and aggregate result for `chain_tools`
+- **`ToolChainStepResult`** — per-step outcome with duration and output
+
+**Context-aware suggestions (`types/mcp.go`):**
+- **`ClusterHealth`** — cluster-wide status (`healthy`, `degraded`, `critical`), node/pod counts
+- **`ActionSuggestion`** — recommended next MCP tool with reason, priority, and optional inputs
+- **`SuggestionsResponse`** — bundled suggestions with cluster status and context
+
+**Analysis (`types/status.go`):**
+- **`AnalysisResult`** — extended with **`Suggestions []string`** for remediation hints alongside `Issues` and `ProbableFix`
+
+**Agent impersonation guard (`auth/agent.go`):**
+- **`AgentIdentity`** — authenticated agent ID and scope (`readonly`, `write`, `admin`)
+- **`AgentCredential`** — binds an API key to a single agent identity
+- **`ValidateAgentClaim`** — rejects cross-agent impersonation (admin may read other agents' audit data)
+- **`ResolveAgentFromCredential`** — resolves agent from API key at MCP startup
+
+```go
+import "github.com/kranix-io/kranix-packages/auth"
+
+if err := auth.ValidateAgentClaim(
+    auth.AgentIdentity{AgentID: "agent-a", Scope: auth.AgentScopeWrite},
+    claimedAgentID,
+    false, // allowCrossAgentRead
+); err != nil {
+    // impersonation denied
+}
+```
+
 ### Resilience — circuit breaker & warm standby (`types/resilience.go`)
 
 - **`CircuitBreakerSpec`** / **`CircuitBreakerStatus`** on workload spec/status (`circuitBreaker`): failure/success thresholds, open duration, half-open probe limits, optional **`tripOnDegraded`**. States: `closed`, `open`, `half-open`.
@@ -619,7 +658,7 @@ Provides support for remote SSH backend:
 |---|---|
 | `kranix-core` | Imports types, errors, logging, RuntimeDriver interface |
 | `kranix-api` | Imports types, errors, auth, proto stubs |
-| `kranix-mcp` | Imports types, errors, API client |
+| `kranix-mcp` | Imports types, errors, agent auth, MCP types; calls kranix-api with `X-Agent-Id` |
 | `kranix-cli` | Imports types, errors, Go SDK |
 | `kranix-runtime` | Implements RuntimeDriver interface |
 | `kranix-operator` | Imports CRD types (re-exported from types package) |
