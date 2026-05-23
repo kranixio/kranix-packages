@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kranix-io/kranix-packages/cost"
 	"github.com/kranix-io/kranix-packages/types"
 )
 
@@ -17,7 +18,30 @@ func (s *mockServer) routeCost(w http.ResponseWriter, r *http.Request) {
 		s.costSummary(w, r)
 		return
 	}
+	if r.Method == http.MethodPost && path == "/api/v1/cost/estimate" {
+		s.estimateDeploymentCost(w, r)
+		return
+	}
 	http.NotFound(w, r)
+}
+
+func (s *mockServer) estimateDeploymentCost(w http.ResponseWriter, r *http.Request) {
+	var req types.CostEstimateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	name := req.Name
+	if name == "" {
+		name = req.Spec.Name
+	}
+	namespace := req.Namespace
+	if namespace == "" {
+		namespace = req.Spec.Namespace
+	}
+	resp := cost.EstimateFromSpec(name, namespace, req.Spec, req.Duration)
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(resp)
 }
 
 func (s *mockServer) costSummary(w http.ResponseWriter, r *http.Request) {

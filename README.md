@@ -14,6 +14,9 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 |---|---|
 | `types` | Core domain types (Workload, Pod, Namespace, Status, quotas, cron fields, …) |
 | `types/mcp.go` | MCP tool chaining, cluster health, and action suggestion types |
+| `types/cost.go` | Pre-deploy cost estimate request/response types |
+| `types/rollback.go` | Workload revision snapshots and rollback request/result types |
+| `cost/` | Shared deployment cost estimator used by kranix-api and kranix-mock-api |
 | `types/ratelimit` | Rate limiting and quota types |
 | `types/sse` | Server-Sent Events streaming types |
 | `types/apiversion` | API versioning and routing types |
@@ -293,7 +296,7 @@ for frame in subscribe_sse(
 
 ### Mock API server (`kranix-mock-api`)
 
-Run a local process that implements the same URL shapes and JSON models as [kranix-api](../kranix-api) for workloads, namespaces, pod log SSE, `/api/sse` broadcasts, **incident runbooks** (`/api/v1/incident/*`, including `POST .../runbooks/{id}/execute` with a seeded `rb-oncall-pagerduty` playbook), **analytics** (`POST /api/v1/analytics/metrics`, `GET .../analytics/workloads/{id}?type=latency` for latency percentiles), and **cost** (`GET /api/v1/cost/summary`, `GET /api/v1/workloads/{id}/cost` with mock **rightsizing** hints). Point any SDK at `http://localhost:8080` (or any `-addr`).
+Run a local process that implements the same URL shapes and JSON models as [kranix-api](../kranix-api) for workloads, namespaces, pod log SSE, `/api/sse` broadcasts, **incident runbooks** (`/api/v1/incident/*`, including `POST .../runbooks/{id}/execute` with a seeded `rb-oncall-pagerduty` playbook), **analytics** (`POST /api/v1/analytics/metrics`, `GET .../analytics/workloads/{id}?type=latency` for latency percentiles), and **cost** (`GET /api/v1/cost/summary`, `GET /api/v1/workloads/{id}/cost`, `POST /api/v1/cost/estimate` with mock **rightsizing** hints). Point any SDK at `http://localhost:8080` (or any `-addr`).
 
 ```bash
 go run ./cmd/kranix-mock-api -addr :8080 -skip-auth=true
@@ -365,7 +368,11 @@ kranix-packages/
 │   ├── workload.go
 │   ├── pod.go
 │   ├── mcp.go             # Tool chaining, suggestions, cluster health
+│   ├── cost.go            # Cost estimate request/response
+│   ├── rollback.go        # Workload revisions, rollback request/result
 │   └── ...
+├── cost/
+│   └── estimate.go        # Shared deployment cost estimator
 ├── errors/
 ├── logging/
 ├── config/
@@ -555,6 +562,28 @@ if err := auth.ValidateAgentClaim(
 ); err != nil {
     // impersonation denied
 }
+```
+
+### Rollback & cost types (`types/rollback.go`, `types/cost.go`, `cost/estimate.go`)
+
+Shared contracts for workload rollback and pre-deploy cost estimation:
+
+**Rollback (`types/rollback.go`):**
+- **`WorkloadRevision`** — retained spec snapshot (image, replicas, resources, tags)
+- **`RollbackRequest`** / **`RollbackResult`** — revert to a revision (`revisionId` optional → previous version)
+- **`RevisionListResponse`** — list of available revisions for a workload
+
+**Cost estimation (`types/cost.go`, `cost/estimate.go`):**
+- **`CostEstimateRequest`** — proposed `WorkloadSpec` + duration window
+- **`CostEstimateResponse`** — `totalCost`, breakdown, rightsizing hints, `monthlyCostPerReplica`
+- **`CostSummaryResponse`** — namespace-level cost rollup
+- **`EstimateFromSpec`** / **`EstimateFromWorkload`** — shared heuristic used by kranix-api, kranix-mcp, and mock-api
+
+```go
+import "github.com/kranix-io/kranix-packages/cost"
+
+resp := cost.EstimateFromSpec("api", "staging", spec, "30d")
+fmt.Println(resp.TotalCost, resp.Rightsizing.Reason)
 ```
 
 ### Resilience — circuit breaker & warm standby (`types/resilience.go`)
