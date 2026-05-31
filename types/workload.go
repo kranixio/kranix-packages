@@ -50,6 +50,10 @@ type WorkloadSpec struct {
 	SecretRotation *SecretRotationSpec `json:"secretRotation,omitempty"`
 	// Labels are optional workload labels propagated to Kubernetes (e.g. warm standby role).
 	Labels map[string]string `json:"labels,omitempty"`
+	// Volumes defines persistent volumes to auto-create, attach, and optionally clean up.
+	Volumes []VolumeSpec `json:"volumes,omitempty"`
+	// NetworkBandwidth limits egress/ingress per workload when supported by the backend.
+	NetworkBandwidth *NetworkBandwidthSpec `json:"networkBandwidth,omitempty"`
 }
 
 // ResourceSpec defines compute resource requirements.

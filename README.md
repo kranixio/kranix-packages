@@ -14,6 +14,7 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 |---|---|
 | `types` | Core domain types (Workload, Pod, Namespace, Status, quotas, cron fields, …) |
 | `types/node.go` | Node health scoring, drain lifecycle, and `NodeOperations` interface |
+| `types/runtime_extended.go` | Checkpoint/restore, volume lifecycle, bandwidth spec, and `RuntimeExtendedOperations` |
 | `types/template.go` | KranixApp template generation request/response types |
 | `template/` | KranixApp manifest generator from natural language descriptions |
 | `types/mcp.go` | MCP tool chaining, cluster health, action suggestions, event subscription, and tool version metadata |
@@ -569,6 +570,14 @@ Shared contracts for **kranix-mcp** and **kranix-api** MCP integration:
 - **`NodeDrainRequest`** / **`NodeDrainResult`** — safe eviction before maintenance
 - **`NodeOperations`** — interface implemented by Kubernetes runtime driver
 - **`SchedulingConfig.architecture`** / **`avoidDrainingNodes`** — multi-arch routing and drain-aware placement
+
+**Runtime extended operations (`types/runtime_extended.go`):**
+- **`VolumeSpec`** / **`NetworkBandwidthSpec`** — optional fields on **`WorkloadSpec`** (`volumes[]`, `networkBandwidth`)
+- **`CheckpointRequest`** / **`CheckpointResult`** — pause or scale-to-zero checkpoint metadata
+- **`RestoreRequest`** / **`RestoreResult`** — resume from checkpoint
+- **`VolumeLifecycleResult`** / **`VolumeState`** — provisioned PVC or Docker volume status
+- **`RuntimeExtendedOperations`** — checkpoint, restore, list checkpoints, provision/cleanup volumes
+- **`RuntimePluginInfo`** / **`RuntimePluginListResponse`** — registered runtime backend plugins
 
 **Analysis (`types/status.go`):**
 - **`AnalysisResult`** — extended with **`Suggestions []string`** for remediation hints alongside `Issues` and `ProbableFix`
