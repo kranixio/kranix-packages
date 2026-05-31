@@ -13,6 +13,7 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 | Package | Description |
 |---|---|
 | `types` | Core domain types (Workload, Pod, Namespace, Status, quotas, cron fields, …) |
+| `types/node.go` | Node health scoring, drain lifecycle, and `NodeOperations` interface |
 | `types/template.go` | KranixApp template generation request/response types |
 | `template/` | KranixApp manifest generator from natural language descriptions |
 | `types/mcp.go` | MCP tool chaining, cluster health, action suggestions, event subscription, and tool version metadata |
@@ -562,6 +563,12 @@ Shared contracts for **kranix-mcp** and **kranix-api** MCP integration:
 
 **MCP tool versioning (`types/mcp.go`):**
 - **`MCPToolVersionMeta`** — `version`, `deprecated`, `replacedBy` fields exposed in `tools/list`
+
+**Runtime node operations (`types/node.go`):**
+- **`BackendHealthReport`** / **`NodeHealthReport`** — 0–100 health scores from latency and error rate
+- **`NodeDrainRequest`** / **`NodeDrainResult`** — safe eviction before maintenance
+- **`NodeOperations`** — interface implemented by Kubernetes runtime driver
+- **`SchedulingConfig.architecture`** / **`avoidDrainingNodes`** — multi-arch routing and drain-aware placement
 
 **Analysis (`types/status.go`):**
 - **`AnalysisResult`** — extended with **`Suggestions []string`** for remediation hints alongside `Issues` and `ProbableFix`

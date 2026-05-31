@@ -172,6 +172,10 @@ type SchedulingConfig struct {
 	PreemptionEnabled bool                `json:"preemptionEnabled,omitempty"`
 	PriorityClassName string              `json:"priorityClassName,omitempty"`
 	Spot              *SpotWorkloadConfig `json:"spot,omitempty"`
+	// Architecture routes workloads to amd64 or arm64 nodes (kubernetes.io/arch).
+	Architecture string `json:"architecture,omitempty"`
+	// AvoidDrainingNodes excludes nodes marked for maintenance from placement.
+	AvoidDrainingNodes bool `json:"avoidDrainingNodes,omitempty"`
 }
 
 // WorkloadPriority enumerates coarse scheduling tiers.
