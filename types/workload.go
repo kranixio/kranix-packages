@@ -54,6 +54,8 @@ type WorkloadSpec struct {
 	Volumes []VolumeSpec `json:"volumes,omitempty"`
 	// NetworkBandwidth limits egress/ingress per workload when supported by the backend.
 	NetworkBandwidth *NetworkBandwidthSpec `json:"networkBandwidth,omitempty"`
+	// Probes configure startup, liveness, and readiness checks (startup blocks traffic until ready).
+	Probes *WorkloadProbes `json:"probes,omitempty"`
 }
 
 // ResourceSpec defines compute resource requirements.
@@ -180,6 +182,25 @@ type SchedulingConfig struct {
 	Architecture string `json:"architecture,omitempty"`
 	// AvoidDrainingNodes excludes nodes marked for maintenance from placement.
 	AvoidDrainingNodes bool `json:"avoidDrainingNodes,omitempty"`
+	// NodePlacement selects nodes by region, zone, hardware profile, or custom labels.
+	NodePlacement *NodePlacement `json:"nodePlacement,omitempty"`
+}
+
+// NodePlacement targets nodes by hardware or region labels.
+type NodePlacement struct {
+	RequiredLabels  map[string]string     `json:"requiredLabels,omitempty"`
+	PreferredLabels []NodeLabelPreference `json:"preferredLabels,omitempty"`
+	Region          string                `json:"region,omitempty"`       // topology.kubernetes.io/region
+	Zone            string                `json:"zone,omitempty"`         // topology.kubernetes.io/zone
+	HardwareType    string                `json:"hardwareType,omitempty"` // kranix.io/hardware
+	InstanceType    string                `json:"instanceType,omitempty"` // node.kubernetes.io/instance-type
+}
+
+// NodeLabelPreference is a weighted soft node label match.
+type NodeLabelPreference struct {
+	Key    string `json:"key"`
+	Value  string `json:"value"`
+	Weight int32  `json:"weight,omitempty"`
 }
 
 // WorkloadPriority enumerates coarse scheduling tiers.

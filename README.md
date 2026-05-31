@@ -15,6 +15,8 @@ All cross-cutting concerns that are needed by more than one repo live here. Noth
 | `types` | Core domain types (Workload, Pod, Namespace, Status, quotas, cron fields, …) |
 | `types/node.go` | Node health scoring, drain lifecycle, and `NodeOperations` interface |
 | `types/runtime_extended.go` | Checkpoint/restore, volume lifecycle, bandwidth spec, and `RuntimeExtendedOperations` |
+| `types/migration.go` | Cross-backend workload migration request/result and `RuntimeMigrationOperations` |
+| `types/probes.go` | Startup, liveness, and readiness probe specs on `WorkloadSpec` |
 | `types/template.go` | KranixApp template generation request/response types |
 | `template/` | KranixApp manifest generator from natural language descriptions |
 | `types/mcp.go` | MCP tool chaining, cluster health, action suggestions, event subscription, and tool version metadata |
@@ -578,6 +580,18 @@ Shared contracts for **kranix-mcp** and **kranix-api** MCP integration:
 - **`VolumeLifecycleResult`** / **`VolumeState`** — provisioned PVC or Docker volume status
 - **`RuntimeExtendedOperations`** — checkpoint, restore, list checkpoints, provision/cleanup volumes
 - **`RuntimePluginInfo`** / **`RuntimePluginListResponse`** — registered runtime backend plugins
+
+**Workload migration (`types/migration.go`):**
+- **`WorkloadMigrationRequest`** / **`WorkloadMigrationResult`** — move workloads between backends with optional zero downtime
+- **`RuntimeMigrationOperations`** — implemented by `kranix-runtime/internal/migration`
+
+**Health probes (`types/probes.go`):**
+- **`WorkloadProbes`** — **`startup`**, **`liveness`**, **`readiness`** on **`WorkloadSpec.probes`**
+- **`ProbeSpec`** — HTTP, TCP, or exec probe with timing thresholds
+
+**Node placement (`types/workload.go`):**
+- **`NodePlacement`** — **`region`**, **`zone`**, **`hardwareType`**, **`instanceType`**, **`requiredLabels`**, **`preferredLabels`**
+- Merged into **`scheduling.nodeSelectors`** and soft node affinity by the runtime driver
 
 **Analysis (`types/status.go`):**
 - **`AnalysisResult`** — extended with **`Suggestions []string`** for remediation hints alongside `Issues` and `ProbableFix`
